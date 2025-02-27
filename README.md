@@ -6,6 +6,8 @@ The AI uses **Neural Networks** trained with Genetic Algorithms.
 
 External libraries SDL2, ImGui, glm, glew and OpenGL are used for graphics and user interface.
 
+![TinyAIDriver Screenshot](Docs/tinyaidriver_screenshot.png)
+
 ## Features
 
 - Neural network implementation for vehicle control
@@ -71,4 +73,3 @@ See the `license.txt` file for details.
 ## Acknowledgements
 
 This project is a spin-off of `Demo9` from the [dpasca-sdl2-template](https://github.com/dpasca/dpasca-sdl2-template) repository.
-
