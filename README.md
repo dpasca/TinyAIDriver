@@ -1,20 +1,18 @@
 # TinyAIDriver
 
-An example of an minimal obstacle avoidance self-driving AI written in C++.
+A minimal obstacle avoidance self-driving AI written in C++.
+The AI is built on a **Neural Network** trained with Genetic Algorithms.
 
-The AI uses **Neural Networks** trained with Genetic Algorithms.
-
-External libraries SDL2, ImGui, glm, glew and OpenGL are used for graphics and user interface.
+The goal of this project is to have a minimal neural net training infrastructure for simple simulations where controllers are involved.
 
 ![TinyAIDriver Screenshot](Docs/tinyaidriver_screenshot.png)
 
 ## Features
 
-- Neural network implementation for vehicle control
-- Real-time visualization of the AI decision-making process
-- Training and evolution system for the AI
-- Dynamic traffic simulation
-- Interactive UI for controlling simulation parameters
+- Neural network-driven self-driving AI (obstacle avoidance)
+- Neural Network training and inference in C++ with no external dependencies
+- Real-time visualization of the simulation and training progress
+- Minimal immediate-mode rendering API based on OpenGL
 
 ## Building and Running
 
@@ -22,11 +20,11 @@ External libraries SDL2, ImGui, glm, glew and OpenGL are used for graphics and u
 
 - CMake 3.7 or higher
 - C++20 compatible compiler
-- Git
+- Git (Git Bash on Windows)
 
 ### Getting the Dependencies
 
-The project uses several external libraries (SDL2, ImGui, GLM, fmt) which are fetched automatically. Run:
+Required external dependencies are fetched by calling:
 
 ```bash
 ./get_externals.sh
@@ -46,6 +44,8 @@ The executable will be placed in the `_bin` directory.
 ./_bin/TinyFreeway
 ```
 
+Wait a few seconds while the first batch of networks is trained, then the simulation will start to play, progressively improving over time.
+
 #### Command-Line Options
 
 - `--help`: Display help information
@@ -55,16 +55,21 @@ The executable will be placed in the `_bin` directory.
 
 ## Controls
 
-- UI sliders to control simulation parameters
-- Toggle training/playing modes
-- Adjust neural network parameters
-- View real-time statistics
+The user interaction is limited to tweaking the GUI controls. It's safe to play and see.
 
 ## Project Structure
 
-- `Common/`: Core utilities for SDL2, OpenGL, and ImGui integration
 - `TinyFreeway/`: Self-driving AI implementation and simulation
-- `_externals/`: External dependencies (SDL2, ImGui, GLM, fmt)
+- `Common/`: Core utilities for SDL2, OpenGL, and ImGui integration
+- `_externals/`: External dependencies
+
+## External Dependencies
+
+Graphic display and user interface are implemented using the following libraries:
+- `SDL2`
+- `ImGui`
+- `GLM`
+- `fmt`
 
 ## License
 
