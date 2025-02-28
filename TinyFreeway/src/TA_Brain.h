@@ -28,7 +28,7 @@ public:
 
     Chromo MakeBrainChromo() const;
 
-    void AnimateBrain(const Vec& ins, Vec& outs) const;
+    void AnimateBrain(const Tensor& ins, Tensor& outs) const;
 };
 
 #endif

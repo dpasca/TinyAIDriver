@@ -26,13 +26,12 @@ class SimpleNN
 {
     static constexpr bool USE_XAVIER_INIT = true;
 public:
-    using Vec = VecT<T>;
-    using Mat = MatT<T>;
+    using Tensor = TensorT<T>;
 private:
     struct Layer
     {
-        Mat Wei;
-        Vec Bia;
+        Tensor Wei;
+        Tensor Bia;
     };
     std::vector<Layer> mLs;
     size_t mMaxLenVecN {};
@@ -43,8 +42,8 @@ public:
     {
         for (size_t i=0; i < layerNs.size()-1; ++i)
         {
-            mLs[i].Wei = Mat(layerNs[i], layerNs[i+1]);
-            mLs[i].Bia = Vec(layerNs[i+1]);
+            mLs[i].Wei = Tensor(layerNs[i], layerNs[i+1]);
+            mLs[i].Bia = Tensor(1, layerNs[i+1]);
         }
 
         mMaxLenVecN = *std::max_element(layerNs.begin(), layerNs.end());
@@ -54,7 +53,7 @@ public:
     SimpleNN(const Chromo& chromo, const std::vector<size_t>& layerNs)
         : SimpleNN(layerNs)
     {
-        assert(chromo.GetChromoDataSize() == CalcNNSize(layerNs));
+        assert(chromo.GetSize() == CalcNNSize(layerNs));
 
         const auto* ptr = chromo.GetChromoData();
         for (auto& l : mLs)
@@ -128,7 +127,7 @@ private:
             [](size_t sum, const Layer& l){ return sum + l.Wei.size() + l.Bia.size(); });
     }
 public:
-    void ForwardPass(Vec& outs, const Vec& ins)
+    void ForwardPass(Tensor& outs, const Tensor& ins)
     {
         assert(ins.size()  == mLs[0].Wei.size_rows() &&
                outs.size() == mLs.back().Wei.size_cols());
@@ -139,7 +138,7 @@ public:
         /* tanh       */ //[](auto& v) { for (auto& x : v) x = tanh(x); };
         /* relu       */ //[](auto& v) { for (auto& x : v) x = std::max(T(0), x); };
         /* leaky_relu */ //[](auto& v) { for (auto& x : v) x = std::max(T(0.01)*x, x); };
-        /* gelu       */ [](auto& v) { for (auto& x : v) x = x * T(0.5) * (T(1.0) + erf(x / sqrt(T(2.0)))); };
+        /* gelu       */ [](auto& v) { v.ForEach([](auto& x) { x = x * T(0.5) * (T(1.0) + erf(x / sqrt(T(2.0)))); }); };
 
         //auto activ_vec = gelu_vec;
 
@@ -147,7 +146,7 @@ public:
         auto* pTempMem1 = (T*)alloca(mMaxLenVecN * sizeof(T));
 
         {
-            Vec tmp0(pTempMem0, mLs[0].Wei.size_cols());
+            Tensor tmp0(1, mLs[0].Wei.size_cols(), pTempMem0, false);
             Vec_mul_Mat(tmp0, ins, mLs[0].Wei);
             tmp0 += mLs[0].Bia;
             activ_vec(tmp0);
@@ -155,8 +154,8 @@ public:
         for (size_t i=1; i < mLs.size()-1; ++i)
         {
             const auto& l = mLs[i];
-            Vec tmp0(pTempMem0, mLs[i-1].Wei.size_cols());
-            Vec tmp1(pTempMem1, l.Wei.size_cols());
+            Tensor tmp0(1, mLs[i-1].Wei.size_cols(), pTempMem0, false);
+            Tensor tmp1(1, l.Wei.size_cols(), pTempMem1, false);
             Vec_mul_Mat(tmp1, tmp0, l.Wei);
             tmp1 += l.Bia;
             activ_vec(tmp1);
@@ -164,7 +163,7 @@ public:
         }
         {
             const auto& l = mLs.back();
-            Vec tmp0(pTempMem0, mLs[mLs.size()-2].Wei.size_cols());
+            Tensor tmp0(1, mLs[mLs.size()-2].Wei.size_cols(), pTempMem0, false);
             Vec_mul_Mat(outs, tmp0, l.Wei);
             outs += l.Bia;
             activ_vec(outs);
@@ -208,7 +207,7 @@ Chromo Brain::MakeBrainChromo() const
 }
 
 //==================================================================
-void Brain::AnimateBrain(const Vec& ins, Vec& outs) const
+void Brain::AnimateBrain(const Tensor& ins, Tensor& outs) const
 {
     moNN->ForwardPass(outs, ins);
 }

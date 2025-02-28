@@ -403,8 +403,8 @@ public:
         // apply the brain, if we have one 8)
         if (mpBrain)
         {
-            Vec inputs(ourVh.mSens, Vehicle::SENS_N);
-            Vec outputs(ourVh.mCtrls, Vehicle::CTRL_N);
+            Tensor inputs(1, Vehicle::SENS_N, ourVh.mSens, false);
+            Tensor outputs(1, Vehicle::CTRL_N, ourVh.mCtrls, false);
             mpBrain->AnimateBrain(inputs, outputs);
 
             // clamp the outputs in the valid ranges
