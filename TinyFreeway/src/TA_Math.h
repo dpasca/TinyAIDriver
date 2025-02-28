@@ -1,59 +1,59 @@
 //==================================================================
-/// CS_Math.h
+/// TA_Math.h
 ///
 /// Created by Davide Pasca - 2023/04/28
 /// See the file "license.txt" that comes with this project for
 /// copyright info.
 //==================================================================
 
-#ifndef CS_MATH_H
-#define CS_MATH_H
+#ifndef TA_MATH_H
+#define TA_MATH_H
 
 #include <cmath>
 #include <algorithm>
 #include <vector>
 #include <functional>
 
-//#define CSM_MAT_COL_MAJOR
+//#define MAT_COL_MAJOR
 
 //==================================================================
 template <typename T>
-class CSM_VecT
+class VecT
 {
     T*      mpData {};
     size_t  mSize {};
     bool    mOwnsData {true};
 
 public:
-    CSM_VecT()                           {}
-    CSM_VecT(size_t size)                : mpData(new T[size]), mSize(size) {}
-    CSM_VecT(T* pData, size_t size)      : mpData(pData), mSize(size), mOwnsData(false) {}
-    CSM_VecT(const T* pData, size_t size): mpData((T*)pData), mSize(size), mOwnsData(false) {}
-    CSM_VecT(size_t size, const T& fill) : CSM_VecT(size)
+    VecT()                           {}
+    VecT(size_t size)                : mpData(new T[size]), mSize(size) {}
+    VecT(T* pData, size_t size)      : mpData(pData), mSize(size), mOwnsData(false) {}
+    VecT(const T* pData, size_t size): mpData((T*)pData), mSize(size), mOwnsData(false) {}
+    VecT(size_t size, const T& fill) : VecT(size)
     {
         std::fill(mpData, mpData + mSize, fill);
     }
-    CSM_VecT(size_t size, const T* pSrc) : CSM_VecT(size)
+    VecT(size_t size, const T* pSrc) : VecT(size)
     {
         std::copy(pSrc, pSrc + mSize, mpData);
     }
-    CSM_VecT(size_t size, const std::function<T(size_t)>& fun) : CSM_VecT(size)
+    VecT(size_t size, const std::function<T(size_t)>& fun) : VecT(size)
     {
         for (size_t i = 0; i < mSize; ++i)
             mpData[i] = fun(i);
     }
-    ~CSM_VecT()
+    ~VecT()
     {
         if (mOwnsData) delete[] mpData;
     }
 
     // copy constructor
-    CSM_VecT(const CSM_VecT& other) : CSM_VecT(other.mSize)
+    VecT(const VecT& other) : VecT(other.mSize)
     {
         std::copy(other.mpData, other.mpData + mSize, mpData);
     }
     // copy assignment
-    CSM_VecT& operator=(const CSM_VecT& other)
+    VecT& operator=(const VecT& other)
     {
         if (this == &other)
             return *this;
@@ -78,13 +78,13 @@ public:
     }
 
     // move constructor
-    CSM_VecT(CSM_VecT&& other)
+    VecT(VecT&& other)
     {
         *this = std::move(other);
     }
 
     // move assignment
-    CSM_VecT& operator=(CSM_VecT&& other) noexcept
+    VecT& operator=(VecT&& other) noexcept
     {
         if (mpData && mOwnsData)
 			delete[] mpData;
@@ -94,7 +94,7 @@ public:
         return *this;
     }
     // += operator
-    CSM_VecT& operator+=(const CSM_VecT& other)
+    VecT& operator+=(const VecT& other)
     {
         assert(mSize == other.mSize);
         for (size_t i=0; i < mSize; ++i)
@@ -169,7 +169,7 @@ public:
 
 //==================================================================
 template <typename T>
-class CSM_MatT
+class MatT
 {
     std::vector<T> mData;
 
@@ -177,24 +177,24 @@ class CSM_MatT
     size_t         mCols {};
 
 public:
-    CSM_MatT() {}
-    CSM_MatT(size_t rows, size_t cols)
+    MatT() {}
+    MatT(size_t rows, size_t cols)
         : mData(rows * cols)
         , mRows(rows), mCols(cols)
     {}
 
-    CSM_MatT(size_t rows, size_t cols, const T* pSrc)
+    MatT(size_t rows, size_t cols, const T* pSrc)
         : mData(pSrc, pSrc + rows * cols)
         , mRows(rows), mCols(cols)
     {}
 
     // move constructor
-    CSM_MatT(CSM_MatT&& other)
+    MatT(MatT&& other)
         : mData(std::move(other.mData)), mRows(other.mRows), mCols(other.mCols)
     {}
 
     // move assignment
-    CSM_MatT& operator=(CSM_MatT&& other)
+    MatT& operator=(MatT&& other)
     {
         mData = std::move(other.mData);
         mRows = other.mRows;
@@ -205,7 +205,7 @@ public:
     T& operator()(size_t row, size_t col)
     {
         assert( row < mRows && col < mCols );
-#ifdef CSM_MAT_COL_MAJOR
+#ifdef MAT_COL_MAJOR
         return mData[col * mRows + row];
 #else
         return mData[row * mCols + col];
@@ -215,14 +215,14 @@ public:
     const T& operator()(size_t row, size_t col) const
     {
         assert( row < mRows && col < mCols );
-#ifdef CSM_MAT_COL_MAJOR
+#ifdef MAT_COL_MAJOR
         return mData[col * mRows + row];
 #else
         return mData[row * mCols + col];
 #endif
     }
 
-#ifdef CSM_MAT_COL_MAJOR
+#ifdef MAT_COL_MAJOR
 #else
           T* operator[](size_t row)       {assert(row < mRows); return &mData[row * mCols];}
     const T* operator[](size_t row) const {assert(row < mRows); return &mData[row * mCols];}
@@ -250,7 +250,7 @@ public:
     }
 };
 
-inline auto CSM_Vec_mul_Mat = [](auto& resVec, const auto& vec, const auto& mat) -> auto&
+inline auto Vec_mul_Mat = [](auto& resVec, const auto& vec, const auto& mat) -> auto&
 {
     assert(resVec.size() == mat.size_cols());
 
@@ -264,11 +264,11 @@ inline auto CSM_Vec_mul_Mat = [](auto& resVec, const auto& vec, const auto& mat)
     return resVec;
 };
 
-//using CS_SCALAR = double;
-using CS_SCALAR = float;
+//using SCALAR = double;
+using SCALAR = float;
 
-using CSM_Vec = CSM_VecT<CS_SCALAR>;
-using CSM_Mat = CSM_MatT<CS_SCALAR>;
+using Vec = VecT<SCALAR>;
+using Mat = MatT<SCALAR>;
 
 #endif
 

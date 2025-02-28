@@ -18,9 +18,9 @@
 #include "MathBase.h"
 #include "ImmGL.h"
 #include "MinimalSDLApp.h"
-#include "CS_Brain.h"
-#include "CS_Train.h"
-#include "CS_Trainer.h"
+#include "TA_Brain.h"
+#include "TA_Train.h"
+#include "TA_Trainer.h"
 #include "Simulation.h"
 
 // speed of our simulation, as well as display
@@ -47,20 +47,20 @@ public:
     bool                            mShowDebugDraw = true;
 
     // training variables
-    std::unique_ptr<CS_Trainer>     moTrainer;
+    std::unique_ptr<Trainer>     moTrainer;
     size_t                          mCurModelIdx = 0;
     size_t                          mLastEpoch = 0;
     double                          mLastEpochTimeS = 0;
     double                          mLastEpochLenTimeS = 0;
     // periodically updated from the training
-    std::vector<CS_Chromo>          mBestChromos;
-    std::vector<CS_ChromoInfo>      mBestCInfos;
+    std::vector<Chromo>          mBestChromos;
+    std::vector<ChromoInfo>      mBestCInfos;
 
     // simulation to play/test
     bool                            mPlayEnabled = true;
     uint32_t                        mPlaySeed = 0;
     std::unique_ptr<Simulation>     moPlaySim;
-    std::unique_ptr<CS_Brain>   moPlayBrain;
+    std::unique_ptr<Brain>   moPlayBrain;
 
     DemoMain()
     {
@@ -300,7 +300,7 @@ void DemoMain::AnimateDemo(float dt)
     {
         if (!mBestChromos.empty())
         {
-            moPlayBrain = std::make_unique<CS_Brain>(
+            moPlayBrain = std::make_unique<Brain>(
                 mBestChromos[0],
                 Vehicle::SENS_N,
                 Vehicle::CTRL_N);
@@ -380,10 +380,10 @@ Float3 DemoMain::GetOurVehiclePos() const
 //==================================================================
 void DemoMain::doStartTraining()
 {
-    CS_Trainer::Params par;
+    Trainer::Params par;
     par.maxEpochsN = 10000;
 
-    par.evalBrainFn = [](const CS_Brain &brain, std::atomic<bool>& reqShutdown)
+    par.evalBrainFn = [](const Brain &brain, std::atomic<bool>& reqShutdown)
     {
         double totFitness = 0;
         // run a simulation for each variant
@@ -407,9 +407,9 @@ void DemoMain::doStartTraining()
     };
 
     // create the trainer
-    moTrainer = std::make_unique<CS_Trainer>(
+    moTrainer = std::make_unique<Trainer>(
         par,
-        std::make_unique<CS_Train>(Vehicle::SENS_N, Vehicle::CTRL_N));
+        std::make_unique<Train>(Vehicle::SENS_N, Vehicle::CTRL_N));
 
     mLastEpoch = 0;
     mLastEpochTimeS = GetSteadyTimeS();

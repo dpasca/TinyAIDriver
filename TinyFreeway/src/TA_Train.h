@@ -1,20 +1,20 @@
 //==================================================================
-/// CS_Train.h
+/// TA_Train.h
 ///
 /// Created by Davide Pasca - 2023/04/28
 /// See the file "license.txt" that comes with this project for
 /// copyright info.
 //==================================================================
 
-#ifndef CS_TRAIN_H
-#define CS_TRAIN_H
+#ifndef TA_TRAIN_H
+#define TA_TRAIN_H
 
 #include <functional>
 #include <vector>
 #include <memory>
 #include <mutex>
 #include <random>
-#include "CS_Brain.h"
+#include "TA_Brain.h"
 
 //==================================================================
 static auto uniformCrossOver = [](auto& rng, const auto& a, const auto& b)
@@ -64,7 +64,7 @@ static auto mutateNormalDist = [](auto& rng, const auto& vec, float rate)
     for (size_t i=0; i < n; ++i)
     {
         if (uni(rng) < rate)
-            p[i] += (CS_SCALAR)nor(rng);
+            p[i] += (SCALAR)nor(rng);
     }
     return newVec;
 };
@@ -79,20 +79,20 @@ static auto mutateScaled = [](auto& rng, const auto& vec, float rate)
     for (size_t i=0; i < n; ++i)
         absSum += std::abs(p[i]);
 
-    const auto avg = (CS_SCALAR)(absSum / (double)n);
-    const auto useSca = std::max( (CS_SCALAR)1.0, avg );
+    const auto avg = (SCALAR)(absSum / (double)n);
+    const auto useSca = std::max( (SCALAR)1.0, avg );
 
     std::uniform_real_distribution<float> uni(0.0, 1.0);
     for (size_t i=0; i < n; ++i)
     {
         if (uni(rng) < rate)
-            p[i] += (CS_SCALAR)((uni(rng) * 2 - 1) * useSca);
+            p[i] += (SCALAR)((uni(rng) * 2 - 1) * useSca);
     }
     return newVec;
 };
 
 //==================================================================
-struct CS_ChromoInfo
+struct ChromoInfo
 {
     double    ci_fitness {0.0};
     size_t    ci_epochIdx {0};
@@ -107,7 +107,7 @@ struct CS_ChromoInfo
 };
 
 //==================================================================
-class CS_Train
+class Train
 {
     template <typename T> using function = std::function<T>;
     template <typename T> using vector = std::vector<T>;
@@ -122,31 +122,31 @@ class CS_Train
 
     // best chromos list just for display
     std::mutex                 mBestChromosMutex;
-	std::vector<CS_Chromo>     mBestChromos;
-    std::vector<CS_ChromoInfo> mBestCInfos;
+	std::vector<Chromo>     mBestChromos;
+    std::vector<ChromoInfo> mBestCInfos;
 
 public:
-    CS_Train(size_t insN, size_t outsN)
+    Train(size_t insN, size_t outsN)
         : mInsN(insN)
         , mOutsN(outsN)
     {
     }
 
     //==================================================================
-    unique_ptr<CS_Brain> CreateBrain(const CS_Chromo &chromo)
+    unique_ptr<Brain> CreateBrain(const Chromo &chromo)
     {
-        return std::make_unique<CS_Brain>(chromo, mInsN, mOutsN);
+        return std::make_unique<Brain>(chromo, mInsN, mOutsN);
     }
 
     //==================================================================
     // initial list of chromosomes
-    vector<CS_Chromo>  MakeStartChromos()
+    vector<Chromo>  MakeStartChromos()
     {
-        std::vector<CS_Chromo> chromos;
+        std::vector<Chromo> chromos;
         for (size_t i=0; i < INIT_POP_N; ++i)
         {
             // make a temp brain from a random seed
-            CS_Brain brain((uint32_t)i, mInsN, mOutsN);
+            Brain brain((uint32_t)i, mInsN, mOutsN);
             // store the brain's chromo
             chromos.push_back( brain.MakeBrainChromo() );
         }
@@ -154,14 +154,14 @@ public:
     }
     //==================================================================
     // when an epoch has ended
-    vector<CS_Chromo>  OnEpochEnd(
+    vector<Chromo>  OnEpochEnd(
             size_t epochIdx,
-            const CS_Chromo* pChromos,
-            const CS_ChromoInfo* pInfos,
+            const Chromo* pChromos,
+            const ChromoInfo* pInfos,
             size_t n)
     {
         // sort by the cost
-        std::vector<std::pair<const CS_Chromo*, const CS_ChromoInfo*>> pSorted;
+        std::vector<std::pair<const Chromo*, const ChromoInfo*>> pSorted;
         for (size_t i=0; i < n; ++i)
             pSorted.push_back({ pChromos + i, pInfos + i });
 
@@ -179,13 +179,13 @@ public:
         std::uniform_real_distribution<double> dist(0.0, 1.0);
 
         // mutation function
-        auto mutateChromo = [&](const CS_Chromo &chromo)
+        auto mutateChromo = [&](const Chromo &chromo)
         {
-            //return mutateScaled(rng, chromo, (CS_SCALAR)0.2);
-            return mutateNormalDist(rng, chromo, (CS_SCALAR)0.1);
+            //return mutateScaled(rng, chromo, (SCALAR)0.2);
+            return mutateNormalDist(rng, chromo, (SCALAR)0.1);
         };
 
-        std::vector<CS_Chromo> newChromos;
+        std::vector<Chromo> newChromos;
 
         // elitism: keep top 1%
         //for (size_t i=0; i < std::max<size_t>(1, n/100); ++i)
@@ -212,8 +212,8 @@ public:
     //==================================================================
     void LockViewBestChromos(
             const std::function<void(
-                const std::vector<CS_Chromo>&,
-                const std::vector<CS_ChromoInfo>&
+                const std::vector<Chromo>&,
+                const std::vector<ChromoInfo>&
                 )>& func)
     {
         std::lock_guard<std::mutex> lock(mBestChromosMutex);
@@ -223,7 +223,7 @@ public:
 private:
     //==================================================================
     void updateBestChromosList(
-            const std::vector<std::pair<const CS_Chromo*, const CS_ChromoInfo*>>& pSorted)
+            const std::vector<std::pair<const Chromo*, const ChromoInfo*>>& pSorted)
     {
         std::lock_guard<std::mutex> lock(mBestChromosMutex);
 

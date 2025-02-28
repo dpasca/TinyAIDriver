@@ -1,5 +1,5 @@
 //==================================================================
-/// CS_Brain.cpp
+/// TA_Brain.cpp
 ///
 /// Created by Davide Pasca - 2023/04/28
 /// See the file "license.txt" that comes with this project for
@@ -15,8 +15,8 @@
 #include <random>
 #include <numeric>
 
-#include "CS_Math.h"
-#include "CS_Brain.h"
+#include "TA_Math.h"
+#include "TA_Brain.h"
 
 using namespace std;
 
@@ -26,8 +26,8 @@ class SimpleNN
 {
     static constexpr bool USE_XAVIER_INIT = true;
 public:
-    using Vec = CSM_VecT<T>;
-    using Mat = CSM_MatT<T>;
+    using Vec = VecT<T>;
+    using Mat = MatT<T>;
 private:
     struct Layer
     {
@@ -51,7 +51,7 @@ public:
     }
 
     // create from chromosome
-    SimpleNN(const CS_Chromo& chromo, const std::vector<size_t>& layerNs)
+    SimpleNN(const Chromo& chromo, const std::vector<size_t>& layerNs)
         : SimpleNN(layerNs)
     {
         assert(chromo.GetChromoDataSize() == CalcNNSize(layerNs));
@@ -100,9 +100,9 @@ public:
     }
 
     // flatten to a chromosome
-    CS_Chromo FlattenNN() const
+    Chromo FlattenNN() const
     {
-        CS_Chromo chromo;
+        Chromo chromo;
         chromo.mChromoData.reserve(calcNNSize());
         for (const auto& l : mLs)
         {
@@ -148,7 +148,7 @@ public:
 
         {
             Vec tmp0(pTempMem0, mLs[0].Wei.size_cols());
-            CSM_Vec_mul_Mat(tmp0, ins, mLs[0].Wei);
+            Vec_mul_Mat(tmp0, ins, mLs[0].Wei);
             tmp0 += mLs[0].Bia;
             activ_vec(tmp0);
         }
@@ -157,7 +157,7 @@ public:
             const auto& l = mLs[i];
             Vec tmp0(pTempMem0, mLs[i-1].Wei.size_cols());
             Vec tmp1(pTempMem1, l.Wei.size_cols());
-            CSM_Vec_mul_Mat(tmp1, tmp0, l.Wei);
+            Vec_mul_Mat(tmp1, tmp0, l.Wei);
             tmp1 += l.Bia;
             activ_vec(tmp1);
             std::swap(pTempMem0, pTempMem1);
@@ -165,14 +165,14 @@ public:
         {
             const auto& l = mLs.back();
             Vec tmp0(pTempMem0, mLs[mLs.size()-2].Wei.size_cols());
-            CSM_Vec_mul_Mat(outs, tmp0, l.Wei);
+            Vec_mul_Mat(outs, tmp0, l.Wei);
             outs += l.Bia;
             activ_vec(outs);
         }
     }
 };
 
-template class SimpleNN<CS_SCALAR>;
+template class SimpleNN<SCALAR>;
 
 //==================================================================
 static std::vector<size_t> makeLayerNs(size_t insN, size_t outsN)
@@ -186,29 +186,29 @@ static std::vector<size_t> makeLayerNs(size_t insN, size_t outsN)
 }
 
 //==================================================================
-CS_Brain::CS_Brain(const CS_Chromo& chromo, size_t insN, size_t outsN)
+Brain::Brain(const Chromo& chromo, size_t insN, size_t outsN)
 {
     const auto layerNs = makeLayerNs(insN, outsN);
-    moNN = std::make_unique<SimpleNN<CS_SCALAR>>(chromo, layerNs);
+    moNN = std::make_unique<SimpleNN<SCALAR>>(chromo, layerNs);
 }
 //
-CS_Brain::CS_Brain(uint32_t seed, size_t insN, size_t outsN)
+Brain::Brain(uint32_t seed, size_t insN, size_t outsN)
 {
     const auto layerNs = makeLayerNs(insN, outsN);
-    moNN = std::make_unique<SimpleNN<CS_SCALAR>>(seed, layerNs);
+    moNN = std::make_unique<SimpleNN<SCALAR>>(seed, layerNs);
 }
 
 //
-CS_Brain::~CS_Brain() = default;
+Brain::~Brain() = default;
 
 //==================================================================
-CS_Chromo CS_Brain::MakeBrainChromo() const
+Chromo Brain::MakeBrainChromo() const
 {
     return moNN->FlattenNN();
 }
 
 //==================================================================
-void CS_Brain::AnimateBrain(const CSM_Vec& ins, CSM_Vec& outs) const
+void Brain::AnimateBrain(const Vec& ins, Vec& outs) const
 {
     moNN->ForwardPass(outs, ins);
 }

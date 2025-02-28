@@ -1,13 +1,13 @@
 //==================================================================
-/// CS_Chromo.h
+/// TA_Chromo.h
 ///
 /// Created by Davide Pasca - 2023/04/28
 /// See the file "license.txt" that comes with this project for
 /// copyright info.
 //==================================================================
 
-#ifndef CS_CHROMO_H
-#define CS_CHROMO_H
+#ifndef TA_CHROMO_H
+#define TA_CHROMO_H
 
 #include <vector>
 #include <string>
@@ -15,24 +15,24 @@
 #include <utility>
 #include <memory>
 #include <cstring>
-#include "CS_Math.h"
+#include "TA_Math.h"
 
 //==================================================================
-class CS_Chromo
+class Chromo
 {
 public: // For now...
-    std::vector<CS_SCALAR> mChromoData;
+    std::vector<SCALAR> mChromoData;
 
 public:
-    CS_Chromo CreateEmptyClone() const
+    Chromo CreateEmptyClone() const
     {
-        CS_Chromo chromo;
+        Chromo chromo;
         chromo.mChromoData.resize(mChromoData.size());
         return chromo;
     }
 
-    CS_SCALAR* GetChromoData() { return mChromoData.data(); }
-    const CS_SCALAR* GetChromoData() const { return mChromoData.data(); }
+    SCALAR* GetChromoData() { return mChromoData.data(); }
+    const SCALAR* GetChromoData() const { return mChromoData.data(); }
 
     size_t GetSize() const { return mChromoData.size(); }
 };

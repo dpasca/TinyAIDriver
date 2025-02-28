@@ -1,21 +1,21 @@
 //==================================================================
-/// CS_Trainer.h
+/// TA_Trainer.h
 ///
 /// Created by Davide Pasca - 2023/04/28
 /// See the file "license.txt" that comes with this project for
 /// copyright info.
 //==================================================================
 
-#ifndef CS_TRAINER
-#define CS_TRAINER
+#ifndef TA_TRAINER
+#define TA_TRAINER
 
 #include <future>
 #include <atomic>
 #include <functional>
 #include <vector>
 #include <memory>
-#include "CS_Brain.h"
-#include "CS_Train.h"
+#include "TA_Brain.h"
+#include "TA_Train.h"
 
 //==================================================================
 static inline bool isFutureReady( const std::future<void> &f )
@@ -24,19 +24,19 @@ static inline bool isFutureReady( const std::future<void> &f )
 }
 
 //==================================================================
-class CS_QuickThreadPool
+class QuickThreadPool
 {
     const size_t                   mTheadsN;
     std::vector<std::future<void>> mFutures;
 
 public:
-    CS_QuickThreadPool( size_t threadsN )
+    QuickThreadPool( size_t threadsN )
         : mTheadsN(threadsN)
     {
         mFutures.reserve( threadsN );
     }
 
-    ~CS_QuickThreadPool()
+    ~QuickThreadPool()
     {
         JoinTheads();
     }
@@ -76,18 +76,18 @@ public:
 };
 
 //==================================================================
-class CS_Trainer
+class Trainer
 {
 public:
-    using CreateBrainFnT      = std::function<std::unique_ptr<CS_Brain>(const CS_Chromo&, size_t, size_t)>;
-    using EvalBrainT          = std::function<double (const CS_Brain&, std::atomic<bool>&)>;
-    using OnEpochEndFnT       = std::function<std::vector<CS_Chromo>(size_t,const CS_Chromo*,const double*,size_t)>;
+    using CreateBrainFnT      = std::function<std::unique_ptr<Brain>(const Chromo&, size_t, size_t)>;
+    using EvalBrainT          = std::function<double (const Brain&, std::atomic<bool>&)>;
+    using OnEpochEndFnT       = std::function<std::vector<Chromo>(size_t,const Chromo*,const double*,size_t)>;
 
 private:
     std::future<void>   mFuture;
     std::atomic<bool>   mShutdownReq {};
     size_t              mCurEpochN {};
-    std::unique_ptr<CS_Train> moTrain;
+    std::unique_ptr<Train> moTrain;
 
 public:
     struct Params
@@ -96,7 +96,7 @@ public:
         EvalBrainT      evalBrainFn;
     };
 public:
-    CS_Trainer(const Params& par, std::unique_ptr<CS_Train> &&oTrain)
+    Trainer(const Params& par, std::unique_ptr<Train> &&oTrain)
         : moTrain( std::move(oTrain))
     {
         mFuture = std::async(std::launch::async, [this,par=par](){ ctor_execution(par); });
@@ -104,8 +104,8 @@ public:
 
     void LockViewBestChromos(
             const std::function<void(
-                const std::vector<CS_Chromo>&,
-                const std::vector<CS_ChromoInfo>&
+                const std::vector<Chromo>&,
+                const std::vector<ChromoInfo>&
                 )>& func)
     {
         moTrain->LockViewBestChromos(func);
@@ -126,7 +126,7 @@ private:
             std::vector<std::atomic<double>> fitnesses(popN);
             {
                 // create a thread for each available core
-                CS_QuickThreadPool thpool( std::thread::hardware_concurrency() + 1 );
+                QuickThreadPool thpool( std::thread::hardware_concurrency() + 1 );
 
                 // for each member of the population...
                 for (size_t pidx=0; pidx < popN && !mShutdownReq; ++pidx)
@@ -144,7 +144,7 @@ private:
                 break;
 
             // generate the new chromosomes
-            std::vector<CS_ChromoInfo> infos;
+            std::vector<ChromoInfo> infos;
             infos.resize(popN);
             for (size_t pidx=0; pidx < popN; ++pidx)
             {

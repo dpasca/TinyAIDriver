@@ -18,7 +18,7 @@
 #include "MathBase.h"
 #include "IncludeGL.h"
 #include "ImmGL.h"
-#include "CS_Brain.h"
+#include "TA_Brain.h"
 
 //==================================================================
 static constexpr auto PI2 = 2*glm::pi<float>();
@@ -319,7 +319,7 @@ static size_t calcLaneIdx(float x)
 //==================================================================
 class Simulation
 {
-    const CS_Brain* const mpBrain;
+    const Brain* const mpBrain;
 
     std::vector<Vehicle> mVehicles;
 
@@ -329,7 +329,7 @@ class Simulation
     bool                 mHasArrived = false;
 
 public:
-    Simulation(uint32_t seed, const CS_Brain* pBrain)
+    Simulation(uint32_t seed, const Brain* pBrain)
         : mpBrain(pBrain)
     {
         // 0, is our vehicle
@@ -403,8 +403,8 @@ public:
         // apply the brain, if we have one 8)
         if (mpBrain)
         {
-            CSM_Vec inputs(ourVh.mSens, Vehicle::SENS_N);
-            CSM_Vec outputs(ourVh.mCtrls, Vehicle::CTRL_N);
+            Vec inputs(ourVh.mSens, Vehicle::SENS_N);
+            Vec outputs(ourVh.mCtrls, Vehicle::CTRL_N);
             mpBrain->AnimateBrain(inputs, outputs);
 
             // clamp the outputs in the valid ranges
