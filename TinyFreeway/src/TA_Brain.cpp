@@ -49,7 +49,7 @@ public:
         mMaxLenVecN = *std::max_element(layerNs.begin(), layerNs.end());
     }
 
-    // create from chromosome
+    // create from parameters
     SimpleNN(const Tensor& params, const std::vector<size_t>& layerNs)
         : SimpleNN(layerNs)
     {
@@ -98,7 +98,7 @@ public:
         }
     }
 
-    // flatten to a chromosome
+    // flatten to a 1D tensor
     Tensor FlattenNN() const
     {
         Tensor flat(1, calcNNSize());

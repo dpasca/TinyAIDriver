@@ -53,8 +53,8 @@ public:
     double                          mLastEpochTimeS = 0;
     double                          mLastEpochLenTimeS = 0;
     // periodically updated from the training
-    std::vector<Tensor>          mBestChromos;
-    std::vector<ChromoInfo>      mBestCInfos;
+    std::vector<Tensor>          mBestPool;
+    std::vector<ParamsInfo>      mBestPInfos;
 
     // simulation to play/test
     bool                            mPlayEnabled = true;
@@ -298,10 +298,10 @@ void DemoMain::AnimateDemo(float dt)
     // animate the play/display simulation
     if (mPlayEnabled && (!moPlaySim || !moPlaySim->IsSimRunning()))
     {
-        if (!mBestChromos.empty())
+        if (!mBestPool.empty())
         {
             moPlayBrain = std::make_unique<Brain>(
-                mBestChromos[0],
+                mBestPool[0],
                 Vehicle::SENS_N,
                 Vehicle::CTRL_N);
 
@@ -336,7 +336,7 @@ void DemoMain::animateTrainer()
     // if the future is valid and it's ready
     if (fut.valid() && fut.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
     {
-        moTrainer->LockViewBestChromos([&](const auto&, const auto& infos)
+        moTrainer->LockViewBestPool([&](const auto&, const auto& infos)
         {
             if (infos.empty())
                 printf("Training ended.");
@@ -478,22 +478,18 @@ void DemoMain::handleTrainUI()
             ImGui::TableSetColumnIndex(3);
             ImGui::Text("Fitness");
 
-            // copy the latest best chromos
+            // copy the latest best params
             if (moTrainer)
-                moTrainer->LockViewBestChromos([this](const auto& chromos, const auto& infos)
+                moTrainer->LockViewBestPool([this](const auto& paramsPool, const auto& infos)
                 {
-                    // Convert Tensor to Chromo for each element
-                    mBestChromos.clear();
-                    mBestChromos.reserve(chromos.size());
-                    for (const auto& tensor : chromos) {
-                        mBestChromos.push_back(Tensor(tensor));
-                    }
-                    mBestCInfos = infos;
+                    // Copy the latest best params
+                    mBestPool = paramsPool;
+                    mBestPInfos = infos;
                 });
 
-            for (size_t i=0; i < std::min(SHOW_TOP_N, mBestCInfos.size()); ++i)
+            for (size_t i=0; i < std::min(SHOW_TOP_N, mBestPInfos.size()); ++i)
             {
-                const auto& ci = mBestCInfos[i];
+                const auto& ci = mBestPInfos[i];
                 ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0);
                 ImGui::Text("%zu", i);

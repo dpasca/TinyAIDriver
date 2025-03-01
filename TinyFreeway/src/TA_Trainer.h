@@ -102,21 +102,21 @@ public:
         mFuture = std::async(std::launch::async, [this,par=par](){ ctor_execution(par); });
     }
 
-    void LockViewBestChromos(
+    void LockViewBestPool(
             const std::function<void(
                 const std::vector<Tensor>&,
-                const std::vector<ChromoInfo>&
+                const std::vector<ParamsInfo>&
                 )>& func)
     {
-        moTrain->LockViewBestChromos(func);
+        moTrain->LockViewBestPool(func);
     }
 
 private:
     void ctor_execution(const Params& par)
     {
-        // get the starting chromosomes (i.e. random or from file)
-        auto paramsPool = moTrain->MakeStartChromos();
-        size_t popN = paramsPool.size();
+        // get the starting population (i.e. random or from file)
+        auto pool = moTrain->MakeStartPool();
+        size_t popN = pool.size();
 
         for (size_t eidx=0; eidx < par.maxEpochsN && !mShutdownReq; ++eidx)
         {
@@ -131,9 +131,9 @@ private:
                 // for each member of the population...
                 for (size_t pidx=0; pidx < popN && !mShutdownReq; ++pidx)
                 {
-                    thpool.AddThread([this, &params=paramsPool[pidx], &fitness=fitnesses[pidx], &par]()
+                    thpool.AddThread([this, &params=pool[pidx], &fitness=fitnesses[pidx], &par]()
                     {
-                        // create and evaluate the brain with the given chromosome
+                        // create and evaluate the brain with the given parameters
                         fitness = par.evalBrainFn(*moTrain->CreateBrain(params), mShutdownReq);
                     });
                 }
@@ -143,8 +143,8 @@ private:
             if (mShutdownReq)
                 break;
 
-            // generate the new chromosomes
-            std::vector<ChromoInfo> infos;
+            // generate the new population
+            std::vector<ParamsInfo> infos;
             infos.resize(popN);
             for (size_t pidx=0; pidx < popN; ++pidx)
             {
@@ -154,9 +154,9 @@ private:
                 ci.ci_popIdx = pidx;
             }
 
-            paramsPool = moTrain->OnEpochEnd(eidx, paramsPool.data(), infos.data(), popN);
+            pool = moTrain->OnEpochEnd(eidx, pool.data(), infos.data(), popN);
 
-            popN = paramsPool.size();
+            popN = pool.size();
         }
     }
 public:

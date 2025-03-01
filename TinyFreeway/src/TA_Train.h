@@ -93,7 +93,7 @@ static auto mutateScaled = [](auto& rng, const auto& vec, float rate)
 };
 
 //==================================================================
-struct ChromoInfo
+struct ParamsInfo
 {
     double    ci_fitness {0.0};
     size_t    ci_epochIdx {0};
@@ -122,9 +122,9 @@ class Train
     const size_t mOutsN;
 
     // best params list just for display
-    std::mutex                 mBestChromosMutex;
-	std::vector<Tensor>     mBestChromos;
-    std::vector<ChromoInfo> mBestCInfos;
+    std::mutex              mBestPoolMutex;
+	std::vector<Tensor>     mBestPool;
+    std::vector<ParamsInfo> mBestPInfos;
 
 public:
     Train(size_t insN, size_t outsN)
@@ -140,39 +140,39 @@ public:
     }
 
     //==================================================================
-    // initial list of chromosomes
-    vector<Tensor>  MakeStartChromos()
+    // initial list of parameters
+    vector<Tensor>  MakeStartPool()
     {
-        std::vector<Tensor> paramsPool;
+        std::vector<Tensor> pool;
         for (size_t i=0; i < INIT_POP_N; ++i)
         {
             // make a temp brain from a random seed
             Brain brain((uint32_t)i, mInsN, mOutsN);
             // store the brain's params
-            paramsPool.push_back( brain.MakeBrainParams() );
+            pool.push_back( brain.MakeBrainParams() );
         }
-        return paramsPool;
+        return pool;
     }
     //==================================================================
     // when an epoch has ended
     vector<Tensor>  OnEpochEnd(
             size_t epochIdx,
-            const Tensor* pParams,
-            const ChromoInfo* pInfos,
+            const Tensor* pPool,
+            const ParamsInfo* pInfos,
             size_t n)
     {
         // sort by the cost
-        std::vector<std::pair<const Tensor*, const ChromoInfo*>> pSorted;
+        std::vector<std::pair<const Tensor*, const ParamsInfo*>> pSorted;
         for (size_t i=0; i < n; ++i)
-            pSorted.push_back({ pParams + i, pInfos + i });
+            pSorted.push_back({ pPool + i, pInfos + i });
 
         std::sort(pSorted.begin(), pSorted.end(), [](const auto& a, const auto& b)
         {
             return a.second->ci_fitness > b.second->ci_fitness;
         });
 
-        // update the list of best chromosomes (with a lock... we're in a different thread)
-        updateBestChromosList(pSorted);
+        // update the list of best params (with a lock... we're in a different thread)
+        updateBestPool(pSorted);
 
         // random generator
         const auto seed = (unsigned int)epochIdx;
@@ -186,11 +186,11 @@ public:
             return mutateNormalDist(rng, params, (SCALAR)0.1);
         };
 
-        std::vector<Tensor> newChromos;
+        std::vector<Tensor> newPool;
 
         // elitism: keep top 1%
         //for (size_t i=0; i < std::max<size_t>(1, n/100); ++i)
-        //    newChromos.push_back( *pSorted[i].first );
+        //    newPool.push_back( *pSorted[i].first );
 
         // breed the top N among each other with some mutations
         for (size_t i=0; i < TOP_FOR_SELECTION_N; ++i)
@@ -199,44 +199,44 @@ public:
             for (size_t j=i+1; j < (TOP_FOR_SELECTION_N-1); ++j)
             {
                 const auto& c_j = *pSorted[j].first;
-                newChromos.push_back(              uniformCrossOver(rng, c_i, c_j) );
-                newChromos.push_back( mutateChromo(uniformCrossOver(rng, c_i, c_j)) );
+                newPool.push_back(              uniformCrossOver(rng, c_i, c_j) );
+                newPool.push_back( mutateChromo(uniformCrossOver(rng, c_i, c_j)) );
                 const auto& c_k = *pSorted[j+1].first;
-                newChromos.push_back(              uniformCrossOver(rng, c_i, c_k) );
-                newChromos.push_back( mutateChromo(uniformCrossOver(rng, c_i, c_k)) );
+                newPool.push_back(              uniformCrossOver(rng, c_i, c_k) );
+                newPool.push_back( mutateChromo(uniformCrossOver(rng, c_i, c_k)) );
             }
         }
 
-        return newChromos;
+        return newPool;
     }
 
     //==================================================================
-    void LockViewBestChromos(
+    void LockViewBestPool(
             const std::function<void(
                 const std::vector<Tensor>&,
-                const std::vector<ChromoInfo>&
+                const std::vector<ParamsInfo>&
                 )>& func)
     {
-        std::lock_guard<std::mutex> lock(mBestChromosMutex);
-        func(mBestChromos, mBestCInfos);
+        std::lock_guard<std::mutex> lock(mBestPoolMutex);
+        func(mBestPool, mBestPInfos);
     }
 
 private:
     //==================================================================
-    void updateBestChromosList(
-            const std::vector<std::pair<const Tensor*, const ChromoInfo*>>& pSorted)
+    void updateBestPool(
+            const std::vector<std::pair<const Tensor*, const ParamsInfo*>>& pSorted)
     {
-        std::lock_guard<std::mutex> lock(mBestChromosMutex);
+        std::lock_guard<std::mutex> lock(mBestPoolMutex);
 
         const auto n = std::min(TOP_FOR_REPORT_N, pSorted.size());
 
         // replace the best params list with the new best params
-        mBestChromos.clear();
-        mBestCInfos.clear();
+        mBestPool.clear();
+        mBestPInfos.clear();
         for (size_t i=0; i < n; ++i)
         {
-            mBestChromos.push_back( *pSorted[i].first );
-            mBestCInfos.push_back( *pSorted[i].second );
+            mBestPool.push_back( *pSorted[i].first );
+            mBestPInfos.push_back( *pSorted[i].second );
         }
     }
 };
