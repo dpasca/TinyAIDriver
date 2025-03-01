@@ -53,7 +53,7 @@ public:
     double                          mLastEpochTimeS = 0;
     double                          mLastEpochLenTimeS = 0;
     // periodically updated from the training
-    std::vector<Chromo>          mBestChromos;
+    std::vector<Tensor>          mBestChromos;
     std::vector<ChromoInfo>      mBestCInfos;
 
     // simulation to play/test
@@ -341,7 +341,7 @@ void DemoMain::animateTrainer()
             if (infos.empty())
                 printf("Training ended.");
             else
-                printf("Training ended. Best chromo: %s, fitness:%f",
+                printf("Training ended. Best network: %s, fitness:%f",
                     infos.front().MakeStrID().c_str(),
                     infos.front().ci_fitness);
         });
@@ -482,7 +482,12 @@ void DemoMain::handleTrainUI()
             if (moTrainer)
                 moTrainer->LockViewBestChromos([this](const auto& chromos, const auto& infos)
                 {
-                    mBestChromos = chromos;
+                    // Convert Tensor to Chromo for each element
+                    mBestChromos.clear();
+                    mBestChromos.reserve(chromos.size());
+                    for (const auto& tensor : chromos) {
+                        mBestChromos.push_back(Tensor(tensor));
+                    }
                     mBestCInfos = infos;
                 });
 

@@ -50,12 +50,12 @@ public:
     }
 
     // create from chromosome
-    SimpleNN(const Chromo& chromo, const std::vector<size_t>& layerNs)
+    SimpleNN(const Tensor& params, const std::vector<size_t>& layerNs)
         : SimpleNN(layerNs)
     {
-        assert(chromo.GetSize() == CalcNNSize(layerNs));
+        assert(params.size() == CalcNNSize(layerNs));
 
-        const auto* ptr = chromo.GetChromoData();
+        const auto* ptr = params.data();
         for (auto& l : mLs)
         {
             l.Wei.LoadFromMem(ptr); ptr += l.Wei.size();
@@ -99,18 +99,19 @@ public:
     }
 
     // flatten to a chromosome
-    Chromo FlattenNN() const
+    Tensor FlattenNN() const
     {
-        Chromo chromo;
-        chromo.mChromoData.reserve(calcNNSize());
+        Tensor flat(1, calcNNSize());
+        auto* pData = flat.data();
+        size_t pos = 0;
         for (const auto& l : mLs)
         {
             const auto* weiData = l.Wei.data();
             const auto* biaData = l.Bia.data();
-            chromo.mChromoData.insert(chromo.mChromoData.end(), weiData, weiData + l.Wei.size());
-            chromo.mChromoData.insert(chromo.mChromoData.end(), biaData, biaData + l.Bia.size());
+            std::copy(weiData, weiData + l.Wei.size(), pData + pos); pos += l.Wei.size();
+            std::copy(biaData, biaData + l.Bia.size(), pData + pos); pos += l.Bia.size();
         }
-        return chromo;
+        return flat;
     }
 
     static size_t CalcNNSize(const std::vector<size_t>& layerNs)
@@ -185,10 +186,10 @@ static std::vector<size_t> makeLayerNs(size_t insN, size_t outsN)
 }
 
 //==================================================================
-Brain::Brain(const Chromo& chromo, size_t insN, size_t outsN)
+Brain::Brain(const Tensor& params, size_t insN, size_t outsN)
 {
     const auto layerNs = makeLayerNs(insN, outsN);
-    moNN = std::make_unique<SimpleNN<SCALAR>>(chromo, layerNs);
+    moNN = std::make_unique<SimpleNN<SCALAR>>(params, layerNs);
 }
 //
 Brain::Brain(uint32_t seed, size_t insN, size_t outsN)
@@ -201,7 +202,7 @@ Brain::Brain(uint32_t seed, size_t insN, size_t outsN)
 Brain::~Brain() = default;
 
 //==================================================================
-Chromo Brain::MakeBrainChromo() const
+Tensor Brain::MakeBrainParams() const
 {
     return moNN->FlattenNN();
 }

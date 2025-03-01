@@ -60,15 +60,42 @@ public:
             delete[] mpData;
     }
 
+    //
+    TensorT CreateEmptyClone() const
+    {
+        return TensorT(mRows, mCols);
+    }
+
+    // copy assignment
+    TensorT& operator=(const TensorT& other)
+    {
+        if (this != &other) {
+            if (mpData && mOwnsData)
+                delete[] mpData;
+            mpData = new T[other.mRows * other.mCols];
+            mOwnsData = true;
+            mRows = other.mRows;
+            mCols = other.mCols;
+            std::copy(other.mpData, other.mpData + mRows * mCols, mpData);
+        }
+        return *this;
+    }
+
     // move assignment
     TensorT& operator=(TensorT&& other)
     {
-        if (mpData && mOwnsData)
-            delete[] mpData;
-        mpData = other.mpData;
-        mRows = other.mRows;
-        mCols = other.mCols;
-        other.mpData = nullptr;
+        if (this != &other) {
+            if (mpData && mOwnsData)
+                delete[] mpData;
+            mpData = other.mpData;
+            mRows = other.mRows;
+            mCols = other.mCols;
+            mOwnsData = other.mOwnsData;
+            other.mpData = nullptr;
+            other.mOwnsData = false;
+            other.mRows = 0;
+            other.mCols = 0;
+        }
         return *this;
     }
 

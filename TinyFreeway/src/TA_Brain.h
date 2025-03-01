@@ -12,7 +12,6 @@
 #include <memory>
 #include <vector>
 #include "TA_Math.h"
-#include "TA_Chromo.h"
 
 template <typename T>
 class SimpleNN;
@@ -22,11 +21,11 @@ class Brain
 {
     std::unique_ptr<SimpleNN<SCALAR>> moNN;
 public:
-    Brain(const Chromo& chromo, size_t insN, size_t outsN);
+    Brain(const Tensor& params, size_t insN, size_t outsN);
     Brain(uint32_t seed, size_t insN, size_t outsN);
     ~Brain();
 
-    Chromo MakeBrainChromo() const;
+    Tensor MakeBrainParams() const;
 
     void AnimateBrain(const Tensor& ins, Tensor& outs) const;
 };

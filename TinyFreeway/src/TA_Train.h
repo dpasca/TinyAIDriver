@@ -9,6 +9,7 @@
 #ifndef TA_TRAIN_H
 #define TA_TRAIN_H
 
+#include <sstream>
 #include <functional>
 #include <vector>
 #include <memory>
@@ -20,10 +21,10 @@
 static auto uniformCrossOver = [](auto& rng, const auto& a, const auto& b)
 {
     auto res = a.CreateEmptyClone();
-    auto* pRes = res.GetChromoData();
-    const auto* pA = a.GetChromoData();
-    const auto* pB = b.GetChromoData();
-    const auto n = a.GetSize();
+    auto* pRes = res.data();
+    const auto* pA = a.data();
+    const auto* pB = b.data();
+    const auto n = a.size();
 
     std::uniform_real_distribution<double> uni(0.0, 1.0);
     for (size_t i=0; i < n; ++i)
@@ -36,8 +37,8 @@ static auto calcMeanAndStddev = [](const auto& vec)
 {
     float sum = 0.0f;
     float sum_squared = 0.0f;
-    const auto* p = vec.GetChromoData();
-    const auto n = vec.GetSize();
+    const auto* p = vec.data();
+    const auto n = vec.size();
 
     for (size_t i=0; i < n; ++i)
     {
@@ -56,8 +57,8 @@ static auto mutateNormalDist = [](auto& rng, const auto& vec, float rate)
 {
     auto newVec = vec;
     const auto [mean, stddev] = calcMeanAndStddev(vec);
-    auto* p = newVec.GetChromoData();
-    const auto n = newVec.GetSize();
+    auto* p = newVec.data();
+    const auto n = newVec.size();
 
     std::normal_distribution<float> nor(mean, stddev);
     std::uniform_real_distribution<float> uni(0.0, 1.0);
@@ -74,8 +75,8 @@ static auto mutateScaled = [](auto& rng, const auto& vec, float rate)
     auto newVec = vec;
     double absSum = 0;
 
-    auto* p = newVec.GetChromoData();
-    const auto n = newVec.GetSize();
+    auto* p = newVec.data();
+    const auto n = newVec.size();
     for (size_t i=0; i < n; ++i)
         absSum += std::abs(p[i]);
 
@@ -120,9 +121,9 @@ class Train
     const size_t mInsN;
     const size_t mOutsN;
 
-    // best chromos list just for display
+    // best params list just for display
     std::mutex                 mBestChromosMutex;
-	std::vector<Chromo>     mBestChromos;
+	std::vector<Tensor>     mBestChromos;
     std::vector<ChromoInfo> mBestCInfos;
 
 public:
@@ -133,37 +134,37 @@ public:
     }
 
     //==================================================================
-    unique_ptr<Brain> CreateBrain(const Chromo &chromo)
+    unique_ptr<Brain> CreateBrain(const Tensor &params)
     {
-        return std::make_unique<Brain>(chromo, mInsN, mOutsN);
+        return std::make_unique<Brain>(params, mInsN, mOutsN);
     }
 
     //==================================================================
     // initial list of chromosomes
-    vector<Chromo>  MakeStartChromos()
+    vector<Tensor>  MakeStartChromos()
     {
-        std::vector<Chromo> chromos;
+        std::vector<Tensor> paramsPool;
         for (size_t i=0; i < INIT_POP_N; ++i)
         {
             // make a temp brain from a random seed
             Brain brain((uint32_t)i, mInsN, mOutsN);
-            // store the brain's chromo
-            chromos.push_back( brain.MakeBrainChromo() );
+            // store the brain's params
+            paramsPool.push_back( brain.MakeBrainParams() );
         }
-        return chromos;
+        return paramsPool;
     }
     //==================================================================
     // when an epoch has ended
-    vector<Chromo>  OnEpochEnd(
+    vector<Tensor>  OnEpochEnd(
             size_t epochIdx,
-            const Chromo* pChromos,
+            const Tensor* pParams,
             const ChromoInfo* pInfos,
             size_t n)
     {
         // sort by the cost
-        std::vector<std::pair<const Chromo*, const ChromoInfo*>> pSorted;
+        std::vector<std::pair<const Tensor*, const ChromoInfo*>> pSorted;
         for (size_t i=0; i < n; ++i)
-            pSorted.push_back({ pChromos + i, pInfos + i });
+            pSorted.push_back({ pParams + i, pInfos + i });
 
         std::sort(pSorted.begin(), pSorted.end(), [](const auto& a, const auto& b)
         {
@@ -179,13 +180,13 @@ public:
         std::uniform_real_distribution<double> dist(0.0, 1.0);
 
         // mutation function
-        auto mutateChromo = [&](const Chromo &chromo)
+        auto mutateChromo = [&](const Tensor &params)
         {
-            //return mutateScaled(rng, chromo, (SCALAR)0.2);
-            return mutateNormalDist(rng, chromo, (SCALAR)0.1);
+            //return mutateScaled(rng, params, (SCALAR)0.2);
+            return mutateNormalDist(rng, params, (SCALAR)0.1);
         };
 
-        std::vector<Chromo> newChromos;
+        std::vector<Tensor> newChromos;
 
         // elitism: keep top 1%
         //for (size_t i=0; i < std::max<size_t>(1, n/100); ++i)
@@ -212,7 +213,7 @@ public:
     //==================================================================
     void LockViewBestChromos(
             const std::function<void(
-                const std::vector<Chromo>&,
+                const std::vector<Tensor>&,
                 const std::vector<ChromoInfo>&
                 )>& func)
     {
@@ -223,13 +224,13 @@ public:
 private:
     //==================================================================
     void updateBestChromosList(
-            const std::vector<std::pair<const Chromo*, const ChromoInfo*>>& pSorted)
+            const std::vector<std::pair<const Tensor*, const ChromoInfo*>>& pSorted)
     {
         std::lock_guard<std::mutex> lock(mBestChromosMutex);
 
         const auto n = std::min(TOP_FOR_REPORT_N, pSorted.size());
 
-        // replace the best chromos list with the new best chromos
+        // replace the best params list with the new best params
         mBestChromos.clear();
         mBestCInfos.clear();
         for (size_t i=0; i < n; ++i)
