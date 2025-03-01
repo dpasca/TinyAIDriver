@@ -6,8 +6,8 @@
 /// copyright info.
 //==================================================================
 
-#ifndef TA_TRAIN_H
-#define TA_TRAIN_H
+#ifndef TA_EVOLUTIONENGINE_H
+#define TA_EVOLUTIONENGINE_H
 
 #include <sstream>
 #include <functional>
@@ -136,20 +136,21 @@ public:
 
     //==================================================================
     // initial list of parameters
-    vector<Tensor>  MakeStartPool()
+    vector<Tensor> CreateInitialPopulation()
     {
         std::vector<Tensor> pool;
+        pool.reserve(INIT_POP_N);
         for (size_t i=0; i < INIT_POP_N; ++i)
         {
             // Generate a random network and store it as a flat tensor
             SimpleNN net((uint32_t)i, mLayerNs);
-            pool.push_back( net.FlattenNN() );
+            pool.push_back(net.FlattenNN());
         }
         return pool;
     }
     //==================================================================
     // when an epoch has ended
-    vector<Tensor>  OnEpochEnd(
+    vector<Tensor> CreateNewEvolution(
             size_t epochIdx,
             const Tensor* pPool,
             const ParamsInfo* pInfos,

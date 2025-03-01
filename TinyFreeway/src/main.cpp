@@ -20,7 +20,7 @@
 #include "MinimalSDLApp.h"
 #include "TA_SimpleNN.h"
 #include "TA_EvolutionEngine.h"
-#include "TA_Trainer.h"
+#include "TA_TrainingManager.h"
 #include "Simulation.h"
 
 // speed of our simulation, as well as display
@@ -47,7 +47,7 @@ public:
     bool                            mShowDebugDraw = true;
 
     // training variables
-    std::unique_ptr<Trainer>     moTrainer;
+    std::unique_ptr<TrainingManager>     moTrainer;
     size_t                          mCurModelIdx = 0;
     size_t                          mLastEpoch = 0;
     double                          mLastEpochTimeS = 0;
@@ -390,7 +390,7 @@ Float3 DemoMain::GetOurVehiclePos() const
 //==================================================================
 void DemoMain::doStartTraining()
 {
-    Trainer::Params par;
+    TrainingManager::Params par;
 
     // Setup the layers structure
     par.layerNs = makeLayerNs(Vehicle::SENS_N, Vehicle::CTRL_N);
@@ -423,7 +423,7 @@ void DemoMain::doStartTraining()
     };
 
     // Do create the trainer
-    moTrainer = std::make_unique<Trainer>(par);
+    moTrainer = std::make_unique<TrainingManager>(par);
 
     // Reset our epoch tracking
     mLastEpoch = 0;

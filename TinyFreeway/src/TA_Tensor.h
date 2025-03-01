@@ -1,18 +1,21 @@
 //==================================================================
-/// TA_Math.h
+/// TA_Tensor.h
 ///
-/// Created by Davide Pasca - 2023/04/28
+/// Created by Davide Pasca - 2025/03/01
 /// See the file "license.txt" that comes with this project for
 /// copyright info.
 //==================================================================
 
-#ifndef TA_MATH_H
-#define TA_MATH_H
+#ifndef TA_TENSOR_H
+#define TA_TENSOR_H
 
 #include <cmath>
 #include <algorithm>
 #include <vector>
 #include <functional>
+
+// NOTE: Currently, only supporting up to 2 dimensions
+//  enough for simple neural networks
 
 //==================================================================
 template <typename T>
@@ -52,7 +55,7 @@ public:
     }
 
     // move constructor
-    TensorT(TensorT&& other) { *this = std::move(other); } // call move assignment
+    TensorT(TensorT&& other) { *this = std::move(other); } // Calls move assignment
 
     ~TensorT()
     {
@@ -60,7 +63,6 @@ public:
             delete[] mpData;
     }
 
-    //
     TensorT CreateEmptyClone() const
     {
         return TensorT(mRows, mCols);
@@ -75,7 +77,8 @@ public:
     // copy assignment
     TensorT& operator=(const TensorT& other)
     {
-        if (this != &other) {
+        if (this != &other)
+        {
             if (mpData && mOwnsData)
                 delete[] mpData;
             mpData = new T[other.mRows * other.mCols];
@@ -90,7 +93,8 @@ public:
     // move assignment
     TensorT& operator=(TensorT&& other)
     {
-        if (this != &other) {
+        if (this != &other)
+        {
             if (mpData && mOwnsData)
                 delete[] mpData;
             mpData = other.mpData;
@@ -136,7 +140,7 @@ public:
     size_t size_cols() const { return mCols; }
     size_t size() const { return mRows * mCols; }
 
-    void ForEach(std::function<void(T&)> func)
+    void ForEach(const std::function<void(T&)>& func)
     {
         for (size_t i = 0; i < size(); ++i)
             func(mpData[i]);
@@ -148,6 +152,7 @@ public:
     }
 };
 
+// Very specific Vec * Mat multiplication used in neural networks
 inline auto Vec_mul_Mat = [](auto& resVec, const auto& vec, const auto& mat) -> auto&
 {
     assert(resVec.size() == mat.size_cols());
@@ -162,10 +167,10 @@ inline auto Vec_mul_Mat = [](auto& resVec, const auto& vec, const auto& mat) -> 
     return resVec;
 };
 
+// Set your scalar type here
 //using SCALAR = double;
 using SCALAR = float;
 
 using Tensor = TensorT<SCALAR>;
 
 #endif
-

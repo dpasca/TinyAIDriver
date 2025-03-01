@@ -17,7 +17,7 @@
 #include <cassert>
 #include <random>
 #include <numeric>
-#include "TA_Math.h"
+#include "TA_Tensor.h"
 
 //==================================================================
 template <typename T>
