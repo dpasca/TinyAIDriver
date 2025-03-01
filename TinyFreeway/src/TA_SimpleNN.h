@@ -131,14 +131,16 @@ public:
                outs.size() == mLs.back().Wei.size_cols());
 
         // define the activation function
-        auto activ_vec =
-        /* sigm       */ //[](auto& v) { for (auto& x : v) x = T(1.0) / (T(1.0) + exp(-x)); };
-        /* tanh       */ //[](auto& v) { for (auto& x : v) x = tanh(x); };
-        /* relu       */ //[](auto& v) { for (auto& x : v) x = std::max(T(0), x); };
-        /* leaky_relu */ //[](auto& v) { for (auto& x : v) x = std::max(T(0.01)*x, x); };
-        /* gelu       */ [](auto& v) { v.ForEach([](auto& x) { x = x * T(0.5) * (T(1.0) + erf(x / sqrt(T(2.0)))); }); };
-
-        //auto activ_vec = gelu_vec;
+        auto activ_vec = [](auto& v)
+        {
+            v.ForEach([](auto& x) {
+                //x = T(1.0) / (T(1.0) + exp(-x)); // sigmoid
+                //x = tanh(x); // tanh
+                //x = std::max(T(0), x); // ReLU
+                //x = std::max(T(0.01)*x, x); // Leaky ReLU
+                x = x * T(0.5) * (T(1.0) + erf(x / sqrt(T(2.0)))); // GELU
+            });
+        };
 
         auto* pTempMem0 = (T*)alloca(mMaxLenVecN * sizeof(T));
         auto* pTempMem1 = (T*)alloca(mMaxLenVecN * sizeof(T));
