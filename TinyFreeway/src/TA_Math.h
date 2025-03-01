@@ -66,6 +66,12 @@ public:
         return TensorT(mRows, mCols);
     }
 
+    // A view to a 1D tensor
+    static TensorT CreateVecView(size_t size, T* pData)
+    {
+        return TensorT(1, size, pData, false);
+    }
+
     // copy assignment
     TensorT& operator=(const TensorT& other)
     {

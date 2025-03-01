@@ -146,7 +146,7 @@ public:
         auto* pTempMem1 = (T*)alloca(mMaxLenVecN * sizeof(T));
 
         {
-            Tensor tmp0(1, mLs[0].Wei.size_cols(), pTempMem0, false);
+            auto tmp0 = Tensor::CreateVecView(mLs[0].Wei.size_cols(), pTempMem0);
             Vec_mul_Mat(tmp0, ins, mLs[0].Wei);
             tmp0 += mLs[0].Bia;
             activ_vec(tmp0);
@@ -154,8 +154,8 @@ public:
         for (size_t i=1; i < mLs.size()-1; ++i)
         {
             const auto& l = mLs[i];
-            Tensor tmp0(1, mLs[i-1].Wei.size_cols(), pTempMem0, false);
-            Tensor tmp1(1, l.Wei.size_cols(), pTempMem1, false);
+            auto tmp0 = Tensor::CreateVecView(mLs[i-1].Wei.size_cols(), pTempMem0);
+            auto tmp1 = Tensor::CreateVecView(l.Wei.size_cols(), pTempMem1);
             Vec_mul_Mat(tmp1, tmp0, l.Wei);
             tmp1 += l.Bia;
             activ_vec(tmp1);
@@ -163,7 +163,7 @@ public:
         }
         {
             const auto& l = mLs.back();
-            Tensor tmp0(1, mLs[mLs.size()-2].Wei.size_cols(), pTempMem0, false);
+            auto tmp0 = Tensor::CreateVecView(mLs[mLs.size()-2].Wei.size_cols(), pTempMem0);
             Vec_mul_Mat(outs, tmp0, l.Wei);
             outs += l.Bia;
             activ_vec(outs);
