@@ -26,8 +26,8 @@
 // speed of our simulation, as well as display
 static constexpr auto FRAME_DT = 1.f / 60.f;
 
-// Number of simulations to train on (training set seed: 0...49)
-static constexpr auto TRAINING_SAMPLES_N = (size_t)50;
+// Number of simulations to train on (training set seed: 0...19)
+static constexpr auto TRAINING_SAMPLES_N = (size_t)20;
 
 // Testing set seed (anything above the training set)
 static constexpr auto TESTING_SEED = TRAINING_SAMPLES_N + 50;
