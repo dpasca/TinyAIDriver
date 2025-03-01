@@ -481,7 +481,7 @@ void DemoMain::handleTrainUI()
     if (guiHeader("Brains", true))
     {
         static size_t SHOW_TOP_N = 5;
-        if (ImGui::BeginTable("TopBrains", 5, ImGuiTableFlags_SizingStretchProp))
+        if (ImGui::BeginTable("TopNNets", 5, ImGuiTableFlags_SizingStretchProp))
         {
             ImGui::TableHeadersRow();
             ImGui::TableSetColumnIndex(0);

@@ -111,9 +111,9 @@ public:
         CTRL_STEER_UNIT,  // 0..1 (left to right)
         CTRL_N
     };
-    // sensors, these are the inputs to the brain
+    // sensors, these are the inputs to the net
     float       mSens[SENS_N] {0};
-    // controls, these are the outputs of the brain
+    // controls, these are the outputs of the net
     float       mCtrls[CTRL_N] {0};
 
     // state
@@ -236,6 +236,7 @@ static double calcYawToTarget(
 //==================================================================
 static void fillVehicleSensors(Vehicle& vh, const std::vector<Vehicle>& others, size_t skipIdx)
 {
+    // Fill in the basic sensors
     vh.mSens[Vehicle::SENS_POS_X] = vh.mPos[0];
     vh.mSens[Vehicle::SENS_SPEED] = vh.mSpeed;
     vh.mSens[Vehicle::SENS_ACCEL] = vh.mAccel;
@@ -250,6 +251,8 @@ static void fillVehicleSensors(Vehicle& vh, const std::vector<Vehicle>& others, 
         vh.mSens[Vehicle::SENS_PROBE_FIRST_SPEED + i] = 0;
         vh.mSens[Vehicle::SENS_PROBE_FIRST_YAW + i] = 0;
     }
+
+    // Below, fill in the distance probes. Each probe is a sensor input for the net
 
     // arc of a probe
     const auto probeAngLen = PI2 / Vehicle::PROBES_N;
@@ -287,7 +290,7 @@ example with 4 probes
 
 probeAngLen = 2*pi / 4 (90 degrees)
 #endif
-        // offet into our probe-space
+        // offset into our probe-space
         auto probeYaw = yaw + probeAngLen * 0.5f;
         // wrap around
         if (probeYaw < 0)
@@ -319,7 +322,7 @@ static size_t calcLaneIdx(float x)
 //==================================================================
 class Simulation
 {
-    const SimpleNN* const mpBrain;
+    const SimpleNN* const mpNNet;
 
     std::vector<Vehicle> mVehicles;
 
@@ -329,8 +332,8 @@ class Simulation
     bool                 mHasArrived = false;
 
 public:
-    Simulation(uint32_t seed, const SimpleNN* pBrain)
-        : mpBrain(pBrain)
+    Simulation(uint32_t seed, const SimpleNN* pNNet)
+        : mpNNet(pNNet)
     {
         // 0, is our vehicle
         {
@@ -389,6 +392,11 @@ public:
         }
     }
 
+    // This is the simulation step which takes inputs, feeds them to the
+    //  neural network to generate outputs, which are then applied to the
+    //  vehicle being simulated.
+    // States such as mHasHitVehicle will be used in GetSimScore() to
+    //  evaluate the goodness of the neural network.
     void AnimateSim(float dt)
     {
         if (!IsSimRunning())
@@ -400,12 +408,14 @@ public:
         auto& ourVh = mVehicles[0];
         fillVehicleSensors(ourVh, mVehicles, 0);
 
-        // apply the brain, if we have one 8)
-        if (mpBrain)
+        // apply the net, if we have one 8)
+        if (mpNNet)
         {
-            Tensor inputs(1, Vehicle::SENS_N, ourVh.mSens, false);
-            Tensor outputs(1, Vehicle::CTRL_N, ourVh.mCtrls, false);
-            mpBrain->ForwardPass(outputs, inputs);
+            auto inputs = Tensor::CreateVecView(Vehicle::SENS_N, ourVh.mSens);
+            auto outputs = Tensor::CreateVecView(Vehicle::CTRL_N, ourVh.mCtrls);
+
+            // Apply the neural network to the inputs to generate the outputs
+            mpNNet->ForwardPass(outputs, inputs);
 
             // clamp the outputs in the valid ranges
             for (auto& x : ourVh.mCtrls)
@@ -464,6 +474,8 @@ public:
         return !mHasHitVehicle && !mHasHitCurb && !mHasArrived;
     }
 
+    // Get a score based on the current state of the simulation.
+    // This is used to evaluate the fitness of the neural network.
     double GetSimScore() const
     {
         if (mRunTimeS <= 0)
