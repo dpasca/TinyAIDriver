@@ -319,8 +319,8 @@ class Simulation
     std::vector<Vehicle> mVehicles;
 
     double               mRunTimeS = 0;
-    bool                 mHasHitVehicle = false;
-    bool                 mHasHitCurb = false;
+    int                  mHitVehicleCnt = 0;
+    int                  mHitCurbCnt = 0;
     bool                 mHasArrived = false;
 
 public:
@@ -387,7 +387,7 @@ public:
     // This is the simulation step which takes inputs, feeds them to the
     //  neural network to generate outputs, which are then applied to the
     //  vehicle being simulated.
-    // States such as mHasHitVehicle will be used in GetSimScore() to
+    // States such as mHitVehicleCnt will be used in GetSimScore() to
     //  evaluate the goodness of the neural network.
     void AnimateSim(float dt)
     {
@@ -424,9 +424,9 @@ public:
         if (ourVh.mPos[2] < (-SLAB_DEPTH * SLAB_END_IDX))
             mHasArrived = true;
 
-        // slightly forgiving collision bounds
-        const auto useW = VH_WIDTH * 0.9f;
-        const auto useL = VH_LENGTH * 0.9f;
+        // slightly larger collision bounds
+        const auto useW = VH_WIDTH * 1.05f;
+        const auto useL = VH_LENGTH * 1.05f;
 
         // check for collisions
         const auto ourMinX = ourVh.mPos[0] - useW * 0.5f;
@@ -444,7 +444,7 @@ public:
             if (ourMinX < maxX && ourMaxX > minX &&
                 ourMinZ < maxZ && ourMaxZ > minZ)
             {
-                mHasHitVehicle = true;
+                mHitVehicleCnt += 1;
                 break;
             }
         }
@@ -453,17 +453,24 @@ public:
         const auto edgeL = -SLAB_WIDTH * 0.5f;
         const auto edgeR =  SLAB_WIDTH * 0.5f;
         if (ourVh.mPos[0] < edgeL || ourVh.mPos[0] > edgeR)
-            mHasHitCurb = true;
+            //mHitCurbCnt = true;
+            mHitCurbCnt += 1;
     }
 
     double GetRunTimeS() const { return mRunTimeS; }
-    bool HasHitVehicle() const { return mHasHitVehicle; }
-    bool HasHitCurb() const { return mHasHitCurb; }
+    bool HasHitVehicle() const { return !!mHitVehicleCnt; }
+    bool HasHitCurb() const { return !!mHitCurbCnt; }
     bool HasArrived() const { return mHasArrived; }
 
     bool IsSimRunning() const
     {
-        return !mHasHitVehicle && !mHasHitCurb && !mHasArrived;
+        // Above this counter, should give up, because it may never end otherwise
+        constexpr int HIT_TOLERANCE = 50;
+
+        return
+            mHitVehicleCnt < HIT_TOLERANCE &&
+            mHitCurbCnt < HIT_TOLERANCE &&
+            !mHasArrived;
     }
 
     // Get a score based on the current state of the simulation.
@@ -483,8 +490,8 @@ public:
         auto score = (double)goalReachUnit;
 
         // strong penalty for crashing into something
-        if (mHasHitVehicle || mHasHitCurb)
-            score *= 0.01;
+        if (mHitVehicleCnt || mHitCurbCnt)
+            score /= 1.0 + mHitVehicleCnt + mHitCurbCnt;
 
         if (mHasArrived)
             score *= (1.0 + 1.0 / mRunTimeS);
