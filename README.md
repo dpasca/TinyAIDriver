@@ -75,7 +75,8 @@ Graphic display and user interface are implemented using the following libraries
 - `fmt`
 
 ## Code overview
-The actual AI engine is defined in the following sources:
+
+The actual AI engine, reusable part of this demo, is defined in the following sources:
 - `TA_EvolutionEngine.h`
 - `TA_SimpleNN.h`
 - `TA_Tensor.h`
@@ -89,6 +90,12 @@ The actual AI engine is defined in the following sources:
 **TrainingManager** orchestrates the training process, by calling the evaluation function and passing the results to the EvolutionEngine.
 
 **QuickThreadPool** is a simple thread pool implementation that allows the training process to be parallelized.
+
+The simulation logic for the synthetic environment is contained in the `Simulation` class.
+
+In `main.cpp`, a `calcFitnessFn` function is defined for `TrainingManager`, which is responsible for running the simulation with a given neural network and returning its fitness (success score).
+
+The rest of the code is for display and user interface.
 
 ## Contacts
 
