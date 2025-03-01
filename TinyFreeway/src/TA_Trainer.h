@@ -82,7 +82,7 @@ private:
     std::future<void>   mFuture;
     std::atomic<bool>   mShutdownReq {};
     size_t              mCurEpochN {};
-    std::unique_ptr<Train> moTrain;
+    Train               mTrain;
 
 public:
     struct Params
@@ -93,9 +93,16 @@ public:
     };
 public:
     Trainer(const Params& par)
-        : moTrain(std::make_unique<Train>(par.layerNs))
+        : mTrain(par.layerNs)
     {
         mFuture = std::async(std::launch::async, [this,par=par](){ ctor_execution(par); });
+    }
+
+    ~Trainer()
+    {
+        mShutdownReq = true;
+        if (mFuture.valid())
+            mFuture.get();
     }
 
     void LockViewBestPool(
@@ -104,14 +111,17 @@ public:
                 const std::vector<ParamsInfo>&
                 )>& func)
     {
-        moTrain->LockViewBestPool(func);
+        mTrain.LockViewBestPool(func);
     }
 
 private:
+    // Master execution thread that continuously runs the training
+    //  one epoch at a time, with multiple threads to parallelize the
+    //  fitness calculations of the population
     void ctor_execution(const Params& par)
     {
         // get the starting population (i.e. random or from file)
-        auto pool = moTrain->MakeStartPool();
+        auto pool = mTrain.MakeStartPool();
         size_t popN = pool.size();
 
         for (size_t eidx=0; eidx < par.maxEpochsN && !mShutdownReq; ++eidx)
@@ -130,7 +140,7 @@ private:
                     thpool.AddThread([this, &params=pool[pidx], &fitness=fitnesses[pidx], &par]()
                     {
                         // create and evaluate the net with the given parameters
-                        fitness = par.calcFitnessFn(*moTrain->CreateNetwork(params), mShutdownReq);
+                        fitness = par.calcFitnessFn(*mTrain.CreateNetwork(params), mShutdownReq);
                     });
                 }
             }
@@ -150,7 +160,7 @@ private:
                 ci.ci_popIdx = pidx;
             }
 
-            pool = moTrain->OnEpochEnd(eidx, pool.data(), infos.data(), popN);
+            pool = mTrain.OnEpochEnd(eidx, pool.data(), infos.data(), popN);
 
             popN = pool.size();
         }
