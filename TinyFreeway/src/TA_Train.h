@@ -15,7 +15,7 @@
 #include <memory>
 #include <mutex>
 #include <random>
-#include "TA_Brain.h"
+#include "TA_SimpleNN.h"
 
 //==================================================================
 static auto uniformCrossOver = [](auto& rng, const auto& a, const auto& b)
@@ -118,8 +118,7 @@ class Train
     static constexpr size_t TOP_FOR_SELECTION_N = 10;
     static constexpr size_t TOP_FOR_REPORT_N    = 10;
 
-    const size_t mInsN;
-    const size_t mOutsN;
+    std::vector<size_t>     mLayerNs;
 
     // best params list just for display
     std::mutex              mBestPoolMutex;
@@ -127,16 +126,15 @@ class Train
     std::vector<ParamsInfo> mBestPInfos;
 
 public:
-    Train(size_t insN, size_t outsN)
-        : mInsN(insN)
-        , mOutsN(outsN)
+    Train(const std::vector<size_t>& layerNs)
+        : mLayerNs(layerNs)
     {
     }
 
     //==================================================================
-    unique_ptr<Brain> CreateBrain(const Tensor &params)
+    unique_ptr<SimpleNN> CreateNetwork(const Tensor &params)
     {
-        return std::make_unique<Brain>(params, mInsN, mOutsN);
+        return std::make_unique<SimpleNN>(params, mLayerNs);
     }
 
     //==================================================================
@@ -146,10 +144,9 @@ public:
         std::vector<Tensor> pool;
         for (size_t i=0; i < INIT_POP_N; ++i)
         {
-            // make a temp brain from a random seed
-            Brain brain((uint32_t)i, mInsN, mOutsN);
-            // store the brain's params
-            pool.push_back( brain.MakeBrainParams() );
+            // Generate a random network and store it as a flat tensor
+            SimpleNN net((uint32_t)i, mLayerNs);
+            pool.push_back( net.FlattenNN() );
         }
         return pool;
     }

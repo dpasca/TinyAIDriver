@@ -1,10 +1,13 @@
 //==================================================================
-/// TA_Brain.cpp
+/// TA_SimpleNN.h
 ///
-/// Created by Davide Pasca - 2023/04/28
+/// Created by Davide Pasca - 2025/03/01
 /// See the file "license.txt" that comes with this project for
 /// copyright info.
 //==================================================================
+
+#ifndef TA_SIMPLENN_H
+#define TA_SIMPLENN_H
 
 #include <iostream>
 #include <vector>
@@ -14,10 +17,11 @@
 #include <cassert>
 #include <random>
 #include <numeric>
+#include "TA_Math.h"
 
 //==================================================================
 template <typename T>
-class SimpleNN
+class SimpleNN_T
 {
     static constexpr bool USE_XAVIER_INIT = true;
 public:
@@ -32,9 +36,9 @@ private:
     size_t mMaxLenVecN {};
 
 public:
-    SimpleNN() = default;
+    SimpleNN_T() = default;
 
-    SimpleNN(const std::vector<size_t>& layerNs)
+    SimpleNN_T(const std::vector<size_t>& layerNs)
         : mLs(layerNs.size()-1)
     {
         for (size_t i=0; i < layerNs.size()-1; ++i)
@@ -47,8 +51,8 @@ public:
     }
 
     // create from parameters
-    SimpleNN(const Tensor& params, const std::vector<size_t>& layerNs)
-        : SimpleNN(layerNs)
+    SimpleNN_T(const Tensor& params, const std::vector<size_t>& layerNs)
+        : SimpleNN_T(layerNs)
     {
         assert(params.size() == CalcNNSize(layerNs));
 
@@ -61,8 +65,8 @@ public:
     }
 
     // create from random seed
-    SimpleNN(uint32_t seed, const std::vector<size_t>& layerNs)
-        : SimpleNN(layerNs)
+    SimpleNN_T(uint32_t seed, const std::vector<size_t>& layerNs)
+        : SimpleNN_T(layerNs)
     {
         std::random_device rd;
         std::mt19937 gen( seed ? seed : rd() );
@@ -170,3 +174,8 @@ public:
         }
     }
 };
+
+using SimpleNN = SimpleNN_T<SCALAR>;
+
+#endif
+

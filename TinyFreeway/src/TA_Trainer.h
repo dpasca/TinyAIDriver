@@ -14,7 +14,7 @@
 #include <functional>
 #include <vector>
 #include <memory>
-#include "TA_Brain.h"
+#include "TA_SimpleNN.h"
 #include "TA_Train.h"
 
 //==================================================================
@@ -79,8 +79,8 @@ public:
 class Trainer
 {
 public:
-    using CreateBrainFnT      = std::function<std::unique_ptr<Brain>(const Tensor&, size_t, size_t)>;
-    using EvalBrainT          = std::function<double (const Brain&, std::atomic<bool>&)>;
+    using CreateBrainFnT      = std::function<std::unique_ptr<SimpleNN>(const Tensor&, const std::vector<size_t>&)>;
+    using EvalBrainT          = std::function<double (const SimpleNN&, std::atomic<bool>&)>;
     using OnEpochEndFnT       = std::function<std::vector<Tensor>(size_t,const Tensor*,const double*,size_t)>;
 
 private:
@@ -133,8 +133,8 @@ private:
                 {
                     thpool.AddThread([this, &params=pool[pidx], &fitness=fitnesses[pidx], &par]()
                     {
-                        // create and evaluate the brain with the given parameters
-                        fitness = par.evalBrainFn(*moTrain->CreateBrain(params), mShutdownReq);
+                        // create and evaluate the net with the given parameters
+                        fitness = par.evalBrainFn(*moTrain->CreateNetwork(params), mShutdownReq);
                     });
                 }
             }

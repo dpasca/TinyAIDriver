@@ -18,7 +18,7 @@
 #include "MathBase.h"
 #include "IncludeGL.h"
 #include "ImmGL.h"
-#include "TA_Brain.h"
+#include "TA_SimpleNN.h"
 
 //==================================================================
 static constexpr auto PI2 = 2*glm::pi<float>();
@@ -319,7 +319,7 @@ static size_t calcLaneIdx(float x)
 //==================================================================
 class Simulation
 {
-    const Brain* const mpBrain;
+    const SimpleNN* const mpBrain;
 
     std::vector<Vehicle> mVehicles;
 
@@ -329,7 +329,7 @@ class Simulation
     bool                 mHasArrived = false;
 
 public:
-    Simulation(uint32_t seed, const Brain* pBrain)
+    Simulation(uint32_t seed, const SimpleNN* pBrain)
         : mpBrain(pBrain)
     {
         // 0, is our vehicle
@@ -405,7 +405,7 @@ public:
         {
             Tensor inputs(1, Vehicle::SENS_N, ourVh.mSens, false);
             Tensor outputs(1, Vehicle::CTRL_N, ourVh.mCtrls, false);
-            mpBrain->AnimateBrain(inputs, outputs);
+            mpBrain->ForwardPass(outputs, inputs);
 
             // clamp the outputs in the valid ranges
             for (auto& x : ourVh.mCtrls)

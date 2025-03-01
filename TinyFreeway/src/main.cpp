@@ -18,7 +18,7 @@
 #include "MathBase.h"
 #include "ImmGL.h"
 #include "MinimalSDLApp.h"
-#include "TA_Brain.h"
+#include "TA_SimpleNN.h"
 #include "TA_Train.h"
 #include "TA_Trainer.h"
 #include "Simulation.h"
@@ -60,7 +60,7 @@ public:
     bool                            mPlayEnabled = true;
     uint32_t                        mPlaySeed = 0;
     std::unique_ptr<Simulation>     moPlaySim;
-    std::unique_ptr<Brain>   moPlayBrain;
+    std::unique_ptr<SimpleNN>       moPlayBrain;
 
     DemoMain()
     {
@@ -293,6 +293,17 @@ static void drawRoad(
 }
 
 //==================================================================
+static std::vector<size_t> makeLayerNs(size_t insN, size_t outsN)
+{
+    return std::vector<size_t>{
+        insN,
+        std::max((size_t)(insN * 1.25), outsN),
+        std::max((size_t)(insN * 0.75), outsN),
+        std::max((size_t)(insN * 0.25), outsN),
+        outsN};
+}
+
+//==================================================================
 void DemoMain::AnimateDemo(float dt)
 {
     // animate the play/display simulation
@@ -300,10 +311,9 @@ void DemoMain::AnimateDemo(float dt)
     {
         if (!mBestPool.empty())
         {
-            moPlayBrain = std::make_unique<Brain>(
+            moPlayBrain = std::make_unique<SimpleNN>(
                 mBestPool[0],
-                Vehicle::SENS_N,
-                Vehicle::CTRL_N);
+                makeLayerNs(Vehicle::SENS_N, Vehicle::CTRL_N));
 
             moPlaySim = std::make_unique<Simulation>(
                 mPlaySeed,
@@ -383,7 +393,7 @@ void DemoMain::doStartTraining()
     Trainer::Params par;
     par.maxEpochsN = 10000;
 
-    par.evalBrainFn = [](const Brain &brain, std::atomic<bool>& reqShutdown)
+    par.evalBrainFn = [](const auto &brain, std::atomic<bool>& reqShutdown)
     {
         double totFitness = 0;
         // run a simulation for each variant
@@ -409,7 +419,8 @@ void DemoMain::doStartTraining()
     // create the trainer
     moTrainer = std::make_unique<Trainer>(
         par,
-        std::make_unique<Train>(Vehicle::SENS_N, Vehicle::CTRL_N));
+        std::make_unique<Train>(
+            makeLayerNs(Vehicle::SENS_N, Vehicle::CTRL_N)));
 
     mLastEpoch = 0;
     mLastEpochTimeS = GetSteadyTimeS();
