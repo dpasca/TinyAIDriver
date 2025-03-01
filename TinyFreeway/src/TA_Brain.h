@@ -12,14 +12,12 @@
 #include <memory>
 #include <vector>
 #include "TA_Math.h"
-
-template <typename T>
-class SimpleNN;
+#include "TA_SimpleNN.h"
 
 //==================================================================
 class Brain
 {
-    std::unique_ptr<SimpleNN<SCALAR>> moNN;
+    SimpleNN<SCALAR> mNN;
 public:
     Brain(const Tensor& params, size_t insN, size_t outsN);
     Brain(uint32_t seed, size_t insN, size_t outsN);
