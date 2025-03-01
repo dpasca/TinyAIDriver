@@ -60,7 +60,7 @@ public:
     bool                            mPlayEnabled = true;
     uint32_t                        mPlaySeed = 0;
     std::unique_ptr<Simulation>     moPlaySim;
-    std::unique_ptr<SimpleNN>       moPlayBrain;
+    std::unique_ptr<SimpleNN>       moPlayNet;
 
     DemoMain()
     {
@@ -311,13 +311,13 @@ void DemoMain::AnimateDemo(float dt)
     {
         if (!mBestPool.empty())
         {
-            moPlayBrain = std::make_unique<SimpleNN>(
+            moPlayNet = std::make_unique<SimpleNN>(
                 mBestPool[0],
                 makeLayerNs(Vehicle::SENS_N, Vehicle::CTRL_N));
 
             moPlaySim = std::make_unique<Simulation>(
                 mPlaySeed,
-                moPlayBrain.get());
+                moPlayNet.get());
         }
     }
     if (moPlaySim)
@@ -393,7 +393,7 @@ void DemoMain::doStartTraining()
     Trainer::Params par;
     par.maxEpochsN = 10000;
 
-    par.evalBrainFn = [](const auto &brain, std::atomic<bool>& reqShutdown)
+    par.calcFitnessFn = [](const auto &net, std::atomic<bool>& reqShutdown)
     {
         double totFitness = 0;
         // run a simulation for each variant
@@ -403,8 +403,8 @@ void DemoMain::doStartTraining()
             // e.g. Don't want to train on seed 0, 1 and then validate on 0, 1
             const auto seed = (uint32_t)(sidx + SIM_TRAIN_SEED_BASE);
 
-            // create a simulation for the given scenario and brain
-            auto oSim = std::make_unique<Simulation>(seed, &brain);
+            // create a simulation for the given scenario and neural net
+            auto oSim = std::make_unique<Simulation>(seed, &net);
 
             // run to completion (includes timeout)
             while (oSim->IsSimRunning() && !reqShutdown)
