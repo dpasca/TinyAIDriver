@@ -87,12 +87,13 @@ private:
 public:
     struct Params
     {
+        std::vector<size_t> layerNs;
         size_t          maxEpochsN {};
         std::function<double (const SimpleNN&, std::atomic<bool>&)> calcFitnessFn;
     };
 public:
-    Trainer(const Params& par, std::unique_ptr<Train> &&oTrain)
-        : moTrain( std::move(oTrain))
+    Trainer(const Params& par)
+        : moTrain(std::make_unique<Train>(par.layerNs))
     {
         mFuture = std::async(std::launch::async, [this,par=par](){ ctor_execution(par); });
     }

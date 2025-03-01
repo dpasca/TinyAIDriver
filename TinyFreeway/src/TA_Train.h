@@ -126,10 +126,7 @@ class Train
     std::vector<ParamsInfo> mBestPInfos;
 
 public:
-    Train(const std::vector<size_t>& layerNs)
-        : mLayerNs(layerNs)
-    {
-    }
+    Train(const std::vector<size_t>& layerNs) : mLayerNs(layerNs) {}
 
     //==================================================================
     unique_ptr<SimpleNN> CreateNetwork(const Tensor &params)

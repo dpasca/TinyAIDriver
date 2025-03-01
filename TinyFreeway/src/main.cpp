@@ -391,8 +391,14 @@ Float3 DemoMain::GetOurVehiclePos() const
 void DemoMain::doStartTraining()
 {
     Trainer::Params par;
+
+    // Setup the layers structure
+    par.layerNs = makeLayerNs(Vehicle::SENS_N, Vehicle::CTRL_N);
+
+    // Maximum number of epochs for the training
     par.maxEpochsN = 10000;
 
+    // Fitness calculation function (in our cases it runs and evaluates a simulation)
     par.calcFitnessFn = [](const auto &net, std::atomic<bool>& reqShutdown)
     {
         double totFitness = 0;
@@ -416,12 +422,10 @@ void DemoMain::doStartTraining()
         return totFitness / SIM_TRAIN_VARIANTS_N;
     };
 
-    // create the trainer
-    moTrainer = std::make_unique<Trainer>(
-        par,
-        std::make_unique<Train>(
-            makeLayerNs(Vehicle::SENS_N, Vehicle::CTRL_N)));
+    // Do create the trainer
+    moTrainer = std::make_unique<Trainer>(par);
 
+    // Reset our epoch tracking
     mLastEpoch = 0;
     mLastEpochTimeS = GetSteadyTimeS();
 }
