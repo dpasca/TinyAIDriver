@@ -5,4 +5,4 @@ _externals
 ctags.d/
 tags
 imgui.ini
-
+.vscode/settings.json
