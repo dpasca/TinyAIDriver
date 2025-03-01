@@ -1,9 +1,12 @@
 # TinyAIDriver
 
 A minimal obstacle avoidance self-driving AI written in C++.
-The AI is built on a **Neural Network** trained with Genetic Algorithms.
+The AI is built on neural networks trained with an evolutionary algorithm (aka Genetic Algorithms).
 
-The goal of this project is to have a minimal neural net training infrastructure for simple simulations where controllers are involved.
+The goal of this project is to have a minimal ANN infrastructure for simple simulations where controllers are involved.
+
+This is far from being optimal in any way. It's meant as a starting point and an educational tool.
+Practical applications are possible, but for better performance you're better off using [LibTorch](https://github.com/dpasca/dpasca-pytorch-examples/blob/master/cpp/example1.cpp).
 
 ![TinyAIDriver Screenshot](Docs/tinyaidriver_screenshot.png)
 
@@ -70,6 +73,28 @@ Graphic display and user interface are implemented using the following libraries
 - `ImGui`
 - `GLM`
 - `fmt`
+
+## Code overview
+The actual AI engine is defined in the following sources:
+- `TA_EvolutionEngine.h`
+- `TA_SimpleNN.h`
+- `TA_Tensor.h`
+- `TA_TrainingManager.h`
+- `TA_QuickThreadPool.h`
+
+**SimpleNN** and **Tensor** are the low-level building blocks of the neural network.
+
+**EvolutionEngine** is responsible for the genetic algorithm that given a population of neural networks and their fitness, produces a new generation of networks.
+
+**TrainingManager** orchestrates the training process, by calling the evaluation function and passing the results to the EvolutionEngine.
+
+**QuickThreadPool** is a simple thread pool implementation that allows the training process to be parallelized.
+
+## Contacts
+
+- You can find me on **X** with the handle [109mae](https://x.com/109mae)
+- My company: [NEWTYPE](https://newtypekk.com/)
+- My game studio: [OYK Games](https://oykgames.com/)
 
 ## License
 
