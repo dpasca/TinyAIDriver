@@ -15,7 +15,7 @@
 #include <vector>
 #include <memory>
 #include "TA_SimpleNN.h"
-#include "TA_Train.h"
+#include "TA_EvolutionEngine.h"
 
 //==================================================================
 static inline bool isFutureReady( const std::future<void> &f )
@@ -82,7 +82,7 @@ private:
     std::future<void>   mFuture;
     std::atomic<bool>   mShutdownReq {};
     size_t              mCurEpochN {};
-    Train               mTrain;
+    EvolutionEngine     mEvEngine;
 
 public:
     struct Params
@@ -93,7 +93,7 @@ public:
     };
 public:
     Trainer(const Params& par)
-        : mTrain(par.layerNs)
+        : mEvEngine(par.layerNs)
     {
         mFuture = std::async(std::launch::async, [this,par=par](){ ctor_execution(par); });
     }
@@ -111,7 +111,7 @@ public:
                 const std::vector<ParamsInfo>&
                 )>& func)
     {
-        mTrain.LockViewBestPool(func);
+        mEvEngine.LockViewBestPool(func);
     }
 
 private:
@@ -121,7 +121,7 @@ private:
     void ctor_execution(const Params& par)
     {
         // get the starting population (i.e. random or from file)
-        auto pool = mTrain.MakeStartPool();
+        auto pool = mEvEngine.MakeStartPool();
         size_t popN = pool.size();
 
         for (size_t eidx=0; eidx < par.maxEpochsN && !mShutdownReq; ++eidx)
@@ -140,7 +140,7 @@ private:
                     thpool.AddThread([this, &params=pool[pidx], &fitness=fitnesses[pidx], &par]()
                     {
                         // create and evaluate the net with the given parameters
-                        fitness = par.calcFitnessFn(*mTrain.CreateNetwork(params), mShutdownReq);
+                        fitness = par.calcFitnessFn(*mEvEngine.CreateNetwork(params), mShutdownReq);
                     });
                 }
             }
@@ -160,7 +160,7 @@ private:
                 ci.ci_popIdx = pidx;
             }
 
-            pool = mTrain.OnEpochEnd(eidx, pool.data(), infos.data(), popN);
+            pool = mEvEngine.OnEpochEnd(eidx, pool.data(), infos.data(), popN);
 
             popN = pool.size();
         }

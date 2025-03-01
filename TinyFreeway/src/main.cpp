@@ -19,7 +19,7 @@
 #include "ImmGL.h"
 #include "MinimalSDLApp.h"
 #include "TA_SimpleNN.h"
-#include "TA_Train.h"
+#include "TA_EvolutionEngine.h"
 #include "TA_Trainer.h"
 #include "Simulation.h"
 
@@ -577,7 +577,7 @@ void DemoMain::HandleUI(size_t frameCnt)
         ImGui::Checkbox("Debug Draw", &mShowDebugDraw);
     }
 
-    if (guiHeader("Train", true))
+    if (guiHeader("EvolutionEngine", true))
         handleTrainUI();
 
     if (guiHeader("Play Simulation", true))

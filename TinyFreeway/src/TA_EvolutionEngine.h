@@ -1,5 +1,5 @@
 //==================================================================
-/// TA_Train.h
+/// TA_EvolutionEngine.h
 ///
 /// Created by Davide Pasca - 2023/04/28
 /// See the file "license.txt" that comes with this project for
@@ -108,7 +108,7 @@ struct ParamsInfo
 };
 
 //==================================================================
-class Train
+class EvolutionEngine
 {
     template <typename T> using function = std::function<T>;
     template <typename T> using vector = std::vector<T>;
@@ -126,7 +126,7 @@ class Train
     std::vector<ParamsInfo> mBestPInfos;
 
 public:
-    Train(const std::vector<size_t>& layerNs) : mLayerNs(layerNs) {}
+    EvolutionEngine(const std::vector<size_t>& layerNs) : mLayerNs(layerNs) {}
 
     //==================================================================
     unique_ptr<SimpleNN> CreateNetwork(const Tensor &params)
