@@ -57,14 +57,6 @@ static constexpr auto NPC_STRANDED_P    = 0.02f; // probability of being strande
 static constexpr auto NPC_MIN_SPAWN_R     = VH_LENGTH * 3.f;
 static constexpr auto NPC_MIN_SPAWN_ZDIST = VH_LENGTH * 10.f;
 
-
-static constexpr auto SIM_TRAIN_VARIANTS_N = (size_t)20;
-
-// HACK: for the sake of demoing, we start from seed 0, which is also what the
-// demo uses for display. For real world training, we should start from a
-// different seed than what is used for validation (see: overfitting)
-static constexpr auto SIM_TRAIN_SEED_BASE = (size_t)0;
-
 //==================================================================
 static auto attenuateVal = [](auto val, auto dt, auto att)
 {

@@ -26,6 +26,12 @@
 // speed of our simulation, as well as display
 static constexpr auto FRAME_DT = 1.f / 60.f;
 
+// Number of simulations to train on (training set seed: 0...49)
+static constexpr auto TRAINING_SAMPLES_N = (size_t)50;
+
+// Testing set seed (anything above the training set)
+static constexpr auto TESTING_SEED = TRAINING_SAMPLES_N + 50;
+
 //==================================================================
 static constexpr float DISP_CAM_NEAR    = 0.1f;     // near plane (meters)
 static constexpr float DISP_CAM_FAR     = 1000.f;   // far plane (meters)
@@ -58,7 +64,7 @@ public:
 
     // simulation to play/test
     bool                            mPlayEnabled = true;
-    uint32_t                        mPlaySeed = 0;
+    uint32_t                        mPlaySeed = TESTING_SEED;
     std::unique_ptr<Simulation>     moPlaySim;
     std::unique_ptr<SimpleNN>       moPlayNet;
 
@@ -403,11 +409,11 @@ void DemoMain::doStartTraining()
     {
         double totFitness = 0;
         // run a simulation for each variant
-        for (size_t sidx=0; sidx < SIM_TRAIN_VARIANTS_N; ++sidx)
+        for (size_t sidx=0; sidx < TRAINING_SAMPLES_N; ++sidx)
         {
             // We start with a random seed from a base that should not intersect with the validation set
             // e.g. Don't want to train on seed 0, 1 and then validate on 0, 1
-            const auto seed = (uint32_t)(sidx + SIM_TRAIN_SEED_BASE);
+            const auto seed = (uint32_t)(sidx + TESTING_SEED);
 
             // create a simulation for the given scenario and neural net
             auto oSim = std::make_unique<Simulation>(seed, &net);
@@ -419,7 +425,7 @@ void DemoMain::doStartTraining()
             totFitness += oSim->GetSimScore();
         }
 
-        return totFitness / SIM_TRAIN_VARIANTS_N;
+        return totFitness / TRAINING_SAMPLES_N;
     };
 
     // Do create the trainer
@@ -450,7 +456,7 @@ void DemoMain::handleTrainUI()
             moTrainer->ReqShutdown();
         }
         ImGui::SameLine();
-        ImGui::Text("Variants:%zu", SIM_TRAIN_VARIANTS_N);
+        ImGui::Text("Samples:%zu", TRAINING_SAMPLES_N);
         ImGui::SameLine();
         ImGui::Text("Epoch:%zu...", moTrainer->GetCurEpochN());
     }
