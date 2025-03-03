@@ -32,7 +32,7 @@ public:
         : mpData(new T[rows * cols])
         , mRows(rows), mCols(cols)
     {
-        std::fill(mpData, mpData + mRows * mCols, T(0));
+        fill(T(0));
     }
     TensorT(size_t rows, size_t cols, T* pSrc, bool doCopy)
         : mpData(doCopy ? new T[rows * cols] : pSrc)
@@ -62,6 +62,8 @@ public:
         if (mOwnsData)
             delete[] mpData;
     }
+
+    void fill(const T& val) { std::fill(mpData, mpData + size(), val); }
 
     TensorT CreateEmptyClone() const
     {
@@ -118,6 +120,9 @@ public:
             mpData[i] += other.mpData[i];
         return *this;
     }
+
+          T& operator()(size_t col)       { assert(col<mCols); return mpData[col]; }
+    const T& operator()(size_t col) const { assert(col<mCols); return mpData[col]; }
 
     T& operator()(size_t row, size_t col)
     {
